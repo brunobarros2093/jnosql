@@ -22,7 +22,7 @@ import org.eclipse.jnosql.communication.document.DocumentManager;
 import org.eclipse.jnosql.mapping.Converters;
 import org.eclipse.jnosql.mapping.Database;
 import org.eclipse.jnosql.mapping.DatabaseType;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
 
 /**
  * The default implementation of DocumentTemplate
@@ -32,28 +32,28 @@ import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
 @ApplicationScoped
 class DefaultDocumentTemplate extends AbstractDocumentTemplate {
 
-    private final DocumentEntityConverter converter;
+    private DocumentEntityConverter converter;
 
-    private final Instance<DocumentManager> manager;
+    private Instance<DocumentManager> manager;
 
-    private final DocumentWorkflow workflow;
+    private DocumentEventPersistManager eventManager;
 
-    private final DocumentEventPersistManager persistManager;
+    private EntitiesMetadata entities;
 
-    private final EntitiesMetadata entities;
-
-    private final Converters converters;
+    private Converters converters;
 
     @Inject
     DefaultDocumentTemplate(DocumentEntityConverter converter, Instance<DocumentManager> manager,
-                            DocumentWorkflow workflow, DocumentEventPersistManager persistManager,
-                            EntitiesMetadata entities, Converters converters) {
+                            DocumentEventPersistManager eventManager, EntitiesMetadata entities,
+                            Converters converters) {
         this.converter = converter;
         this.manager = manager;
-        this.workflow = workflow;
-        this.persistManager = persistManager;
+        this.eventManager = eventManager;
         this.entities = entities;
         this.converters = converters;
+    }
+
+    DefaultDocumentTemplate() {
     }
 
     @Override
@@ -67,13 +67,8 @@ class DefaultDocumentTemplate extends AbstractDocumentTemplate {
     }
 
     @Override
-    protected DocumentWorkflow getWorkflow() {
-        return workflow;
-    }
-
-    @Override
     protected DocumentEventPersistManager getEventManager() {
-        return persistManager;
+        return eventManager;
     }
 
     @Override

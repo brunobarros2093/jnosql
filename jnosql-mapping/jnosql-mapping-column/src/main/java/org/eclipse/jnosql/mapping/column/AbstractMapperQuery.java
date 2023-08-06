@@ -17,7 +17,7 @@ package org.eclipse.jnosql.mapping.column;
 import org.eclipse.jnosql.communication.column.Column;
 import org.eclipse.jnosql.communication.column.ColumnCondition;
 import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
 import org.eclipse.jnosql.mapping.util.ConverterUtil;
 
 import java.util.List;
@@ -58,17 +58,15 @@ abstract class AbstractMapperQuery {
         this.template = template;
     }
 
-    protected void appendCondition(ColumnCondition newCondition) {
-        ColumnCondition columnCondition = getColumnCondition(newCondition);
+    protected void appendCondition(ColumnCondition incomingCondition) {
+        ColumnCondition columnCondition = getColumnCondition(incomingCondition);
+
         if (nonNull(condition)) {
-            if (and) {
-                this.condition = condition.and(columnCondition);
-            } else {
-                this.condition = condition.or(columnCondition);
-            }
+            this.condition = and ? this.condition.and(columnCondition) : this.condition.or(columnCondition);
         } else {
             this.condition = columnCondition;
         }
+
         this.negate = false;
         this.name = null;
     }

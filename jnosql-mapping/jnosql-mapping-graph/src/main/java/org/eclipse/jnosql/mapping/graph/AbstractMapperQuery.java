@@ -19,8 +19,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadata;
-import org.eclipse.jnosql.mapping.reflection.FieldMapping;
+import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
+import org.eclipse.jnosql.mapping.metadata.FieldMetadata;
 import org.eclipse.jnosql.mapping.util.ConverterUtil;
 
 import java.util.List;
@@ -134,20 +134,19 @@ class AbstractMapperQuery {
     }
 
     private boolean isKey(String name) {
-        Optional<FieldMapping> field = mapping.fieldMapping(name);
-        return field.map(FieldMapping::isId).orElse(false);
+        Optional<FieldMetadata> field = mapping.fieldMapping(name);
+        return field.map(FieldMetadata::isId).orElse(false);
     }
 
-    private void appendCondition(GraphTraversal<Object, Object> newCondition) {
+    protected void appendCondition(GraphTraversal<Object, Object> incomingCondition) {
+        GraphTraversal<Object, Object> newCondition = checkNegation(incomingCondition);
+
         if (nonNull(condition)) {
-            if (and) {
-                this.condition = __.and(condition, checkNegation(newCondition));
-            } else {
-                this.condition = __.or(condition, checkNegation(newCondition));
-            }
+            this.condition = and ? __.and(condition, newCondition) : __.or(condition, newCondition);
         } else {
-            this.condition = checkNegation(newCondition);
+            this.condition = newCondition;
         }
+
         this.negate = false;
         this.name = null;
     }

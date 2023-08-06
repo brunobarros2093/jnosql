@@ -15,7 +15,7 @@
 package org.eclipse.jnosql.mapping.graph;
 
 import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -32,30 +32,31 @@ import java.util.Iterator;
 @GraphTraversalSourceOperation
 class DefaultGraphTraversalSourceTemplate extends AbstractGraphTemplate {
 
+    private Instance<GraphTraversalSourceSupplier> supplierInstance;
 
-    private final Instance<GraphTraversalSourceSupplier> supplierInstance;
+    private EntitiesMetadata entities;
 
-    private final EntitiesMetadata entities;
+    private GraphConverter converter;
 
-    private final GraphConverter converter;
+    private GraphEventPersistManager persistManager;
 
-    private final GraphWorkflow workflow;
-
-    private final Converters converters;
+    private Converters converters;
 
     @Inject
     DefaultGraphTraversalSourceTemplate(Instance<GraphTraversalSourceSupplier> supplierInstance,
                                         EntitiesMetadata entities,
                                         @GraphTraversalSourceOperation GraphConverter converter,
-                                        GraphWorkflow workflow,
+                                        GraphEventPersistManager persistManager,
                                         Converters converters) {
         this.supplierInstance = supplierInstance;
         this.entities = entities;
         this.converter = converter;
-        this.workflow = workflow;
+        this.persistManager = persistManager;
         this.converters = converters;
     }
 
+    DefaultGraphTraversalSourceTemplate(){
+    }
 
     @Override
     protected Graph getGraph() {
@@ -83,8 +84,8 @@ class DefaultGraphTraversalSourceTemplate extends AbstractGraphTemplate {
     }
 
     @Override
-    protected GraphWorkflow getFlow() {
-        return workflow;
+    protected GraphEventPersistManager getEventManager() {
+        return persistManager;
     }
 
     @Override

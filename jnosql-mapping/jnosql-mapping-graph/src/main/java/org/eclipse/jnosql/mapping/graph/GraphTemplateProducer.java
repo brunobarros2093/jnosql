@@ -16,7 +16,7 @@ package org.eclipse.jnosql.mapping.graph;
 
 import org.eclipse.jnosql.mapping.Converters;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -61,8 +61,7 @@ public class GraphTemplateProducer {
 
         GraphConverter converter = new DefaultGraphConverter(entities,
                 converters,instance, eventManager);
-        GraphWorkflow workflow = new GraphWorkflow(persistManager, converter);
-        return new DefaultGraphTemplate(instance, entities, converter, workflow, converters);
+        return new DefaultGraphTemplate(instance, entities, converter, persistManager, converters);
     }
 
     /**
@@ -79,8 +78,7 @@ public class GraphTemplateProducer {
 
         GraphConverter converter = new DefaultGraphTraversalSourceConverter(entities,
                 converters, instance, eventManager);
-        GraphWorkflow workflow = new GraphWorkflow(persistManager, converter);
-        return new DefaultGraphTraversalSourceTemplate(instance, entities, converter, workflow, converters);
+        return new DefaultGraphTraversalSourceTemplate(instance, entities, converter, persistManager, converters);
     }
 
     static class SingleInstance<T> implements Instance<T> {

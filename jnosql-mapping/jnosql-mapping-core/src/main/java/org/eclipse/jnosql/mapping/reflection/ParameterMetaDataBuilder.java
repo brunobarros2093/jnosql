@@ -17,8 +17,11 @@ package org.eclipse.jnosql.mapping.reflection;
 import jakarta.nosql.Column;
 import jakarta.nosql.Id;
 import org.eclipse.jnosql.mapping.Convert;
+import org.eclipse.jnosql.mapping.metadata.MappingType;
+import org.eclipse.jnosql.mapping.metadata.ParameterMetaData;
 
 import java.lang.reflect.Parameter;
+import java.util.Objects;
 import java.util.Optional;
 
 class ParameterMetaDataBuilder {
@@ -36,10 +39,15 @@ class ParameterMetaDataBuilder {
         Class<?> type = parameter.getType();
         String name = Optional.ofNullable(id)
                 .map(Id::value)
-                .orElseGet(() -> column.value());
-        MappingType mappingType = MappingType.of(parameter);
+                .or(() -> Optional.ofNullable(column).map(Column::value))
+                .orElse(null);
+        if ((Objects.isNull(name) || name.isBlank())
+                && parameter.getDeclaringExecutable().getDeclaringClass().isRecord()) {
+            name = parameter.getName();
+        }
+        MappingType mappingType = MappingType.of(parameter.getType());
         return switch (mappingType) {
-            case COLLECTION, MAP -> new GenericParameterMetaData(name, type,
+            case COLLECTION, MAP -> new DefaultGenericParameterMetaData(name, type,
                     id != null,
                     Optional.ofNullable(convert).map(Convert::value).orElse(null),
                     mappingType, parameter::getParameterizedType);

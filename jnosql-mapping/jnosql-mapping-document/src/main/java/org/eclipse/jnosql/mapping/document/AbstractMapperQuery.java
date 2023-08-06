@@ -18,7 +18,7 @@ import org.eclipse.jnosql.communication.document.Document;
 import org.eclipse.jnosql.communication.document.DocumentCondition;
 
 import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
 import org.eclipse.jnosql.mapping.util.ConverterUtil;
 
 import java.util.List;
@@ -59,18 +59,15 @@ abstract class AbstractMapperQuery {
         this.template = template;
     }
 
-    protected void appendCondition(DocumentCondition newCondition) {
-        DocumentCondition documentCondition = getDocumentCondition(newCondition);
+    protected void appendCondition(DocumentCondition incomingCondition) {
+        DocumentCondition documentCondition = getDocumentCondition(incomingCondition);
 
         if (nonNull(condition)) {
-            if (and) {
-                this.condition = condition.and(documentCondition);
-            } else {
-                this.condition = condition.or(documentCondition);
-            }
+            this.condition = and ? condition.and(documentCondition) : condition.or(documentCondition);
         } else {
             this.condition = documentCondition;
         }
+
         this.negate = false;
         this.name = null;
     }

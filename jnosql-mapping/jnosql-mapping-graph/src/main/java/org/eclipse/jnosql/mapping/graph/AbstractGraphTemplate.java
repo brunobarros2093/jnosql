@@ -28,9 +28,9 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.eclipse.jnosql.mapping.IdNotFoundException;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadata;
-import org.eclipse.jnosql.mapping.reflection.FieldMapping;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
+import org.eclipse.jnosql.mapping.metadata.FieldMetadata;
 import org.eclipse.jnosql.mapping.util.ConverterUtil;
 
 import java.time.Duration;
@@ -43,8 +43,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.function.Supplier;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -67,9 +68,9 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
 
     protected abstract GraphConverter getConverter();
 
-    protected abstract GraphWorkflow getFlow();
-
     protected abstract Converters getConverters();
+
+    protected abstract GraphEventPersistManager getEventManager();
 
     private GremlinExecutor gremlinExecutor;
 
@@ -89,7 +90,7 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
             return v;
         };
 
-        return getFlow().flow(entity, save);
+        return persist(entity, save);
     }
 
     @Override
@@ -116,7 +117,8 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
             GraphTransactionUtil.transaction(getGraph());
             return vertex;
         };
-        return getFlow().flow(entity, update);
+
+        return persist(entity, update);
     }
 
     @Override
@@ -124,7 +126,7 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
         requireNonNull(type, "type is required");
         requireNonNull(id, "id is required");
         EntityMetadata entityMetadata = getEntities().get(type);
-        FieldMapping idField = entityMetadata.id()
+        FieldMetadata idField = entityMetadata.id()
                 .orElseThrow(() -> IdNotFoundException.newInstance(type));
 
         Object value = ConverterUtil.getValue(id, entityMetadata, idField.fieldName(), getConverters());
@@ -396,7 +398,7 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
 
     private <T> Optional<Vertex> vertex(T entity) {
         EntityMetadata entityMetadata = getEntities().get(entity.getClass());
-        FieldMapping field = entityMetadata.id().get();
+        FieldMetadata field = entityMetadata.id().get();
         Object id = field.read(entity);
         Iterator<Vertex> vertices = vertices(id);
         if (vertices.hasNext()) {
@@ -427,7 +429,7 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
 
     private <T> boolean isIdNull(T entity) {
         EntityMetadata entityMetadata = getEntities().get(entity.getClass());
-        FieldMapping field = entityMetadata.id().get();
+        FieldMetadata field = entityMetadata.id().get();
         return isNull(field.read(entity));
 
     }
@@ -435,5 +437,23 @@ public abstract class AbstractGraphTemplate implements GraphTemplate {
     private <T> void checkId(T entity) {
         EntityMetadata entityMetadata = getEntities().get(entity.getClass());
         entityMetadata.id().orElseThrow(() -> IdNotFoundException.newInstance(entity.getClass()));
+    }
+
+    protected <T> T persist(T entity, UnaryOperator<Vertex> persistAction) {
+        return Stream.of(entity)
+                .map(toUnary(getEventManager()::firePreEntity))
+                .map(getConverter()::toVertex)
+                .map(persistAction)
+                .map(t -> getConverter().toEntity(entity, t))
+                .map(toUnary(getEventManager()::firePostEntity))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private <T> UnaryOperator<T> toUnary(Consumer<T> consumer) {
+        return t -> {
+            consumer.accept(t);
+            return t;
+        };
     }
 }

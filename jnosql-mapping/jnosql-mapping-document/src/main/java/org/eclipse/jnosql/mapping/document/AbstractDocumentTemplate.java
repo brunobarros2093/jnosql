@@ -26,15 +26,16 @@ import org.eclipse.jnosql.communication.document.DocumentQuery;
 import org.eclipse.jnosql.communication.document.DocumentQueryParser;
 import org.eclipse.jnosql.mapping.Converters;
 import org.eclipse.jnosql.mapping.IdNotFoundException;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadata;
-import org.eclipse.jnosql.mapping.reflection.FieldMapping;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
+import org.eclipse.jnosql.mapping.metadata.FieldMetadata;
 import org.eclipse.jnosql.mapping.util.ConverterUtil;
 
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -49,14 +50,11 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate {
 
-
     private static final DocumentQueryParser PARSER = new DocumentQueryParser();
 
     protected abstract DocumentEntityConverter getConverter();
 
     protected abstract DocumentManager getManager();
-
-    protected abstract DocumentWorkflow getWorkflow();
 
     protected abstract DocumentEventPersistManager getEventManager();
 
@@ -81,15 +79,14 @@ public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate
     @Override
     public <T> T insert(T entity) {
         requireNonNull(entity, "entity is required");
-        return getWorkflow().flow(entity, insert);
+        return persist(entity, insert);
     }
-
 
     @Override
     public <T> T insert(T entity, Duration ttl) {
         requireNonNull(entity, "entity is required");
         requireNonNull(ttl, "ttl is required");
-        return getWorkflow().flow(entity, e -> getManager().insert(e, ttl));
+        return persist(entity, e -> getManager().insert(e, ttl));
     }
 
     @Override
@@ -111,7 +108,7 @@ public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate
     @Override
     public <T> T update(T entity) {
         requireNonNull(entity, "entity is required");
-        return getWorkflow().flow(entity, update);
+        return persist(entity, update);
     }
 
     @Override
@@ -148,11 +145,11 @@ public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate
         Objects.requireNonNull(query, "query is required");
         final Stream<T> entities = select(query);
         final Iterator<T> iterator = entities.iterator();
-        if(!iterator.hasNext()) {
+        if (!iterator.hasNext()) {
             return Optional.empty();
         }
         final T entity = iterator.next();
-        if(!iterator.hasNext()) {
+        if (!iterator.hasNext()) {
             return Optional.of(entity);
         }
         throw new NonUniqueResultException("No unique result found to the query: " + query);
@@ -163,7 +160,7 @@ public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate
         requireNonNull(type, "type is required");
         requireNonNull(id, "id is required");
         EntityMetadata entityMetadata = getEntities().get(type);
-        FieldMapping idField = entityMetadata.id()
+        FieldMetadata idField = entityMetadata.id()
                 .orElseThrow(() -> IdNotFoundException.newInstance(type));
 
         Object value = ConverterUtil.getValue(id, entityMetadata, idField.fieldName(), getConverters());
@@ -179,7 +176,7 @@ public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate
         requireNonNull(id, "id is required");
 
         EntityMetadata entityMetadata = getEntities().get(type);
-        FieldMapping idField = entityMetadata.id()
+        FieldMetadata idField = entityMetadata.id()
                 .orElseThrow(() -> IdNotFoundException.newInstance(type));
 
         Object value = ConverterUtil.getValue(id, entityMetadata, idField.fieldName(), getConverters());
@@ -264,5 +261,21 @@ public abstract class AbstractDocumentTemplate implements JNoSQLDocumentTemplate
         delete(query);
     }
 
+    protected <T> T persist(T entity, UnaryOperator<DocumentEntity> persistAction) {
+        return Stream.of(entity)
+                .map(toUnary(getEventManager()::firePreEntity))
+                .map(getConverter()::toDocument)
+                .map(persistAction)
+                .map(t -> getConverter().toEntity(entity, t))
+                .map(toUnary(getEventManager()::firePostEntity))
+                .findFirst()
+                .orElseThrow();
+    }
 
+    private <T> UnaryOperator<T> toUnary(Consumer<T> consumer) {
+        return t -> {
+            consumer.accept(t);
+            return t;
+        };
+    }
 }

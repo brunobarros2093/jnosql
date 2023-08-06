@@ -8,6 +8,18 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 
 == [Unreleased]
 
+== [1.0.1] - 2023-7-31
+
+== Fixed
+
+- Added no-args constructor into the injectable beans
+- Fixes lazy loading metadata at the EntityMetadata
+- Fixes ParameterMedataData to not thrown NullPointException when it's built with a Parameter without @Column or @Id annotations
+- Fixes Reflections.getConstructor() method logic to detect constructors with parameters annotated with @Id or @Column
+- Unwrapping of UndeclaredThrowableException in repository when an underlying (f.e. ConstraintValidationException) occurs
+
+== [1.0.0] - 2023-6-22
+
 === Removed
 
 - Removed the JNoSQL Bean Validation module
@@ -17,6 +29,7 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 - Create a filter to ignore unsupported annotations on repositories interfaces.
 - Enhance database supplier error message to use property instead of the enum name.
 - Fix convertion to/from entities when it is a record
+- Enhance the field name auto-detection of the constructor parameters annotated with @Column defined with empty name when it's used Record as entity
 
 === Added
 

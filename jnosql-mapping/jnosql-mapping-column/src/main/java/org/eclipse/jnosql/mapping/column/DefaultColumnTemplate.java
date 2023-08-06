@@ -22,7 +22,7 @@ import org.eclipse.jnosql.communication.column.ColumnManager;
 import org.eclipse.jnosql.mapping.Converters;
 import org.eclipse.jnosql.mapping.Database;
 import org.eclipse.jnosql.mapping.DatabaseType;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
 
 /**
  * The default implementation of {@link JNoSQLColumnTemplate}
@@ -32,31 +32,29 @@ import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
 @ApplicationScoped
 class DefaultColumnTemplate extends AbstractColumnTemplate {
 
-    private final ColumnEntityConverter converter;
+    private ColumnEntityConverter converter;
 
-    private final Instance<ColumnManager> manager;
+    private Instance<ColumnManager> manager;
 
-    private final ColumnWorkflow flow;
+    private ColumnEventPersistManager eventManager;
 
-    private final ColumnEventPersistManager eventManager;
+    private EntitiesMetadata entities;
 
-    private final EntitiesMetadata entities;
-
-    private final Converters converters;
+    private Converters converters;
 
     @Inject
     DefaultColumnTemplate(ColumnEntityConverter converter, Instance<ColumnManager> manager,
-                          ColumnWorkflow flow,
                           ColumnEventPersistManager eventManager,
                           EntitiesMetadata entities, Converters converters) {
         this.converter = converter;
         this.manager = manager;
-        this.flow = flow;
         this.eventManager = eventManager;
         this.entities = entities;
         this.converters = converters;
     }
 
+    DefaultColumnTemplate(){
+    }
 
     @Override
     protected ColumnEntityConverter getConverter() {
@@ -66,11 +64,6 @@ class DefaultColumnTemplate extends AbstractColumnTemplate {
     @Override
     protected ColumnManager getManager() {
         return manager.get();
-    }
-
-    @Override
-    protected ColumnWorkflow getFlow() {
-        return flow;
     }
 
     @Override
@@ -87,5 +80,4 @@ class DefaultColumnTemplate extends AbstractColumnTemplate {
     protected Converters getConverters() {
         return converters;
     }
-
 }

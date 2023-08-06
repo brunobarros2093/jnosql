@@ -14,14 +14,13 @@
  */
 package org.eclipse.jnosql.mapping.column;
 
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Vetoed;
 import jakarta.inject.Inject;
 import jakarta.nosql.column.ColumnTemplate;
 import org.eclipse.jnosql.communication.column.ColumnManager;
 import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -37,9 +36,6 @@ public class ColumnTemplateProducer implements Function<ColumnManager, JNoSQLCol
     private ColumnEntityConverter converter;
 
     @Inject
-    private ColumnWorkflow columnWorkflow;
-
-    @Inject
     private ColumnEventPersistManager eventManager;
 
     @Inject
@@ -51,7 +47,7 @@ public class ColumnTemplateProducer implements Function<ColumnManager, JNoSQLCol
     @Override
     public JNoSQLColumnTemplate apply(ColumnManager manager) {
         Objects.requireNonNull(manager, "manager is required");
-        return new ProducerColumnTemplate(converter, columnWorkflow, manager,
+        return new ProducerColumnTemplate(converter, manager,
                 eventManager, entities, converters);
     }
 
@@ -61,8 +57,6 @@ public class ColumnTemplateProducer implements Function<ColumnManager, JNoSQLCol
 
         private ColumnEntityConverter converter;
 
-        private ColumnWorkflow columnWorkflow;
-
         private ColumnManager manager;
 
         private ColumnEventPersistManager eventManager;
@@ -71,13 +65,12 @@ public class ColumnTemplateProducer implements Function<ColumnManager, JNoSQLCol
 
         private Converters converters;
 
-        ProducerColumnTemplate(ColumnEntityConverter converter, ColumnWorkflow columnWorkflow,
+        ProducerColumnTemplate(ColumnEntityConverter converter,
                                ColumnManager manager,
                                ColumnEventPersistManager eventManager,
                                EntitiesMetadata entities,
                                Converters converters) {
             this.converter = converter;
-            this.columnWorkflow = columnWorkflow;
             this.manager = manager;
             this.eventManager = eventManager;
             this.entities = entities;
@@ -95,11 +88,6 @@ public class ColumnTemplateProducer implements Function<ColumnManager, JNoSQLCol
         @Override
         protected ColumnManager getManager() {
             return manager;
-        }
-
-        @Override
-        protected ColumnWorkflow getFlow() {
-            return columnWorkflow;
         }
 
         @Override

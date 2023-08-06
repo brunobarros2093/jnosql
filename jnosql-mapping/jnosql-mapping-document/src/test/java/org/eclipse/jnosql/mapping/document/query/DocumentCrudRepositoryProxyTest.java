@@ -30,18 +30,16 @@ import org.eclipse.jnosql.communication.document.Document;
 import org.eclipse.jnosql.communication.document.DocumentCondition;
 import org.eclipse.jnosql.communication.document.DocumentDeleteQuery;
 import org.eclipse.jnosql.communication.document.DocumentQuery;
-import org.eclipse.jnosql.mapping.Convert;
 import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.document.DocumentWorkflow;
+import org.eclipse.jnosql.mapping.document.DocumentEntityConverter;
 import org.eclipse.jnosql.mapping.document.JNoSQLDocumentTemplate;
 import org.eclipse.jnosql.mapping.document.MockProducer;
 import org.eclipse.jnosql.mapping.document.entities.Address;
-import org.eclipse.jnosql.mapping.document.spi.DocumentExtension;
-import org.eclipse.jnosql.mapping.reflection.EntitiesMetadata;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
 import org.eclipse.jnosql.mapping.document.entities.Person;
 import org.eclipse.jnosql.mapping.document.entities.Vendor;
-
+import org.eclipse.jnosql.mapping.document.spi.DocumentExtension;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -68,29 +66,16 @@ import java.util.stream.Stream;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.eclipse.jnosql.communication.Condition.AND;
-import static org.eclipse.jnosql.communication.Condition.BETWEEN;
-import static org.eclipse.jnosql.communication.Condition.EQUALS;
-import static org.eclipse.jnosql.communication.Condition.GREATER_THAN;
-import static org.eclipse.jnosql.communication.Condition.IN;
-import static org.eclipse.jnosql.communication.Condition.LESSER_EQUALS_THAN;
-import static org.eclipse.jnosql.communication.Condition.LESSER_THAN;
-import static org.eclipse.jnosql.communication.Condition.LIKE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.eclipse.jnosql.communication.Condition.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @EnableAutoWeld
-@AddPackages(value = {Convert.class, DocumentWorkflow.class})
+@AddPackages(value = {Converters.class, DocumentEntityConverter.class})
 @AddPackages(MockProducer.class)
 @AddExtensions({EntityMetadataExtension.class, DocumentExtension.class})
-public class DocumentCrudRepositoryProxyTest {
+class DocumentCrudRepositoryProxyTest {
 
     private JNoSQLDocumentTemplate template;
 
@@ -135,8 +120,8 @@ public class DocumentCrudRepositoryProxyTest {
 
 
     @Test
-    public void shouldSaveUsingInsertWhenDataDoesNotExist() {
-        when(template.find(Mockito.eq(Person.class), Mockito.eq(10L)))
+    void shouldSaveUsingInsertWhenDataDoesNotExist() {
+        when(template.find(Person.class, 10L))
                 .thenReturn(Optional.empty());
 
 
@@ -152,8 +137,8 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldSaveUsingUpdateWhenDataExists() {
-        when(template.find(Mockito.eq(Person.class), Mockito.eq(10L)))
+    void shouldSaveUsingUpdateWhenDataExists() {
+        when(template.find(Person.class, 10L))
                 .thenReturn(Optional.of(Person.builder().build()));
 
         ArgumentCaptor<Person> captor = ArgumentCaptor.forClass(Person.class);
@@ -167,9 +152,8 @@ public class DocumentCrudRepositoryProxyTest {
         assertEquals(person, value);
     }
 
-
     @Test
-    public void shouldSaveIterable() {
+    void shouldSaveIterable() {
 
         when(personRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -188,9 +172,8 @@ public class DocumentCrudRepositoryProxyTest {
         assertEquals(person, personCapture);
     }
 
-
     @Test
-    public void shouldFindByNameInstance() {
+    void shouldFindByNameInstance() {
 
         when(template.singleResult(Mockito.any(DocumentQuery.class))).thenReturn(Optional
                 .of(Person.builder().build()));
@@ -215,7 +198,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByNameANDAge() {
+    void shouldFindByNameANDAge() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -230,7 +213,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByAgeANDName() {
+    void shouldFindByAgeANDName() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -245,7 +228,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByNameANDAgeOrderByName() {
+    void shouldFindByNameANDAgeOrderByName() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -260,7 +243,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByNameANDAgeOrderByAge() {
+    void shouldFindByNameANDAgeOrderByAge() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -275,7 +258,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldDeleteByName() {
+    void shouldDeleteByName() {
         ArgumentCaptor<DocumentDeleteQuery> captor = ArgumentCaptor.forClass(DocumentDeleteQuery.class);
         personRepository.deleteByName("Ada");
         verify(template).delete(captor.capture());
@@ -288,31 +271,31 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindById() {
+    void shouldFindById() {
         personRepository.findById(10L);
-        verify(template).find(Mockito.eq(Person.class), Mockito.eq(10L));
+        verify(template).find(Person.class, 10L);
     }
 
     @Test
-    public void shouldFindByIds() {
+    void shouldFindByIds() {
         when(template.find(Mockito.eq(Person.class), Mockito.any(Long.class)))
                 .thenReturn(Optional.of(Person.builder().build()));
 
         personRepository.findAllById(singletonList(10L)).toList();
-        verify(template).find(Mockito.eq(Person.class), Mockito.eq(10L));
+        verify(template).find(Person.class, 10L);
         personRepository.findAllById(Arrays.asList(10L, 11L, 12L)).toList();
         verify(template, times(4)).find(Mockito.eq(Person.class), any(Long.class));
     }
 
     @Test
-    public void shouldDeleteById() {
+    void shouldDeleteById() {
         personRepository.deleteById(10L);
         verify(template).delete(Person.class, 10L);
 
     }
 
     @Test
-    public void shouldDeleteByIds() {
+    void shouldDeleteByIds() {
         personRepository.deleteAllById(singletonList(10L));
         verify(template).delete(Person.class, 10L);
 
@@ -322,12 +305,12 @@ public class DocumentCrudRepositoryProxyTest {
 
 
     @Test
-    public void shouldContainsById() {
+    void shouldContainsById() {
         when(template.find(Mockito.eq(Person.class), Mockito.any(Long.class)))
                 .thenReturn(Optional.of(Person.builder().build()));
 
         assertTrue(personRepository.existsById(10L));
-        Mockito.verify(template).find(Mockito.eq(Person.class), Mockito.eq(10L));
+        Mockito.verify(template).find(Person.class, 10L);
 
         when(template.find(Mockito.eq(Person.class), Mockito.any(Long.class)))
                 .thenReturn(Optional.empty());
@@ -336,7 +319,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindAll() {
+    void shouldFindAll() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -351,7 +334,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldDeleteAll() {
+    void shouldDeleteAll() {
         personRepository.deleteAll();
         ArgumentCaptor<Class<?>> captor = ArgumentCaptor.forClass(Class.class);
         verify(template).deleteAll(captor.capture());
@@ -361,17 +344,17 @@ public class DocumentCrudRepositoryProxyTest {
 
 
     @Test
-    public void shouldReturnToString() {
+    void shouldReturnToString() {
         assertNotNull(personRepository.toString());
     }
 
     @Test
-    public void shouldReturnHasCode() {
+    void shouldReturnHasCode() {
         assertEquals(personRepository.hashCode(), personRepository.hashCode());
     }
 
     @Test
-    public void shouldFindByNameAndAgeGreaterEqualThan() {
+    void shouldFindByNameAndAgeGreaterEqualThan() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -401,7 +384,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByGreaterThan() {
+    void shouldFindByGreaterThan() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -420,7 +403,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByAgeLessThanEqual() {
+    void shouldFindByAgeLessThanEqual() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -439,7 +422,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByAgeLessEqual() {
+    void shouldFindByAgeLessEqual() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -459,7 +442,7 @@ public class DocumentCrudRepositoryProxyTest {
 
 
     @Test
-    public void shouldFindByAgeBetween() {
+    void shouldFindByAgeBetween() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -482,7 +465,7 @@ public class DocumentCrudRepositoryProxyTest {
 
 
     @Test
-    public void shouldFindByNameLike() {
+    void shouldFindByNameLike() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -500,7 +483,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByStringWhenFieldIsSet() {
+    void shouldFindByStringWhenFieldIsSet() {
         Vendor vendor = new Vendor("vendor");
         vendor.setPrefixes(Collections.singleton("prefix"));
 
@@ -520,7 +503,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByIn() {
+    void shouldFindByIn() {
         Vendor vendor = new Vendor("vendor");
         vendor.setPrefixes(Collections.singleton("prefix"));
 
@@ -540,7 +523,7 @@ public class DocumentCrudRepositoryProxyTest {
 
 
     @Test
-    public void shouldConvertFieldToTheType() {
+    void shouldConvertFieldToTheType() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -558,25 +541,25 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldGotOrderException() {
+    void shouldGotOrderException() {
         org.junit.jupiter.api.Assertions.assertThrows(MappingException.class, () ->
                 personRepository.findBy());
     }
 
     @Test
-    public void shouldGotOrderException2() {
+    void shouldGotOrderException2() {
         org.junit.jupiter.api.Assertions.assertThrows(MappingException.class, () ->
                 personRepository.findByException());
     }
 
     @Test
-    public void shouldExecuteJNoSQLQuery() {
+    void shouldExecuteJNoSQLQuery() {
         personRepository.findByQuery();
         verify(template).query("select * from Person");
     }
 
     @Test
-    public void shouldExecuteJNoSQLPrepare() {
+    void shouldExecuteJNoSQLPrepare() {
         PreparedStatement statement = Mockito.mock(PreparedStatement.class);
         when(template.prepare(Mockito.anyString())).thenReturn(statement);
         personRepository.findByQuery("Ada");
@@ -584,7 +567,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindBySalary_Currency() {
+    void shouldFindBySalary_Currency() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -603,7 +586,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindBySalary_CurrencyAndSalary_Value() {
+    void shouldFindBySalary_CurrencyAndSalary_Value() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
         when(template.select(any(DocumentQuery.class)))
@@ -624,7 +607,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindBySalary_CurrencyOrderByCurrency_Name() {
+    void shouldFindBySalary_CurrencyOrderByCurrency_Name() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -645,7 +628,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByNameNotEquals() {
+    void shouldFindByNameNotEquals() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -665,7 +648,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByNameNot() {
+    void shouldFindByNameNot() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -685,7 +668,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldFindByAgeNotGreaterThan() {
+    void shouldFindByAgeNotGreaterThan() {
         Person ada = Person.builder()
                 .withAge(20).withName("Ada").build();
 
@@ -705,7 +688,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldConvertMapAddressRepository() {
+    void shouldConvertMapAddressRepository() {
 
         ArgumentCaptor<DocumentQuery> captor = ArgumentCaptor.forClass(DocumentQuery.class);
         addressRepository.findByZipCodeZip("123456");
@@ -726,7 +709,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldConvertMapAddressRepositoryOrder() {
+    void shouldConvertMapAddressRepositoryOrder() {
 
         ArgumentCaptor<DocumentQuery> captor = ArgumentCaptor.forClass(DocumentQuery.class);
         addressRepository.findByZipCodeZipOrderByZipCodeZip("123456");
@@ -750,7 +733,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldExecuteDefaultMethod() {
+    void shouldExecuteDefaultMethod() {
         personRepository.partcionate("name");
 
         ArgumentCaptor<DocumentQuery> captor = ArgumentCaptor.forClass(DocumentQuery.class);
@@ -760,7 +743,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldUseQueriesFromOtherInterface() {
+    void shouldUseQueriesFromOtherInterface() {
         personRepository.findByNameLessThan("name");
 
         ArgumentCaptor<DocumentQuery> captor = ArgumentCaptor.forClass(DocumentQuery.class);
@@ -773,7 +756,7 @@ public class DocumentCrudRepositoryProxyTest {
     }
 
     @Test
-    public void shouldUseDefaultMethodFromOtherInterface() {
+    void shouldUseDefaultMethodFromOtherInterface() {
         personRepository.ada();
 
         ArgumentCaptor<DocumentQuery> captor = ArgumentCaptor.forClass(DocumentQuery.class);

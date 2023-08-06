@@ -16,11 +16,14 @@ package org.eclipse.jnosql.mapping.reflection;
 
 import org.eclipse.jnosql.mapping.Convert;
 import org.eclipse.jnosql.mapping.VetedConverter;
+import org.eclipse.jnosql.mapping.metadata.ConstructorMetadata;
+import org.eclipse.jnosql.mapping.metadata.ParameterMetaData;
 import org.eclipse.jnosql.mapping.test.entities.Person;
 import org.eclipse.jnosql.mapping.test.entities.Worker;
 import org.eclipse.jnosql.mapping.test.entities.constructor.Computer;
 import org.eclipse.jnosql.mapping.test.entities.constructor.BookUser;
 import org.eclipse.jnosql.mapping.test.entities.constructor.PetOwner;
+import org.eclipse.jnosql.mapping.test.entities.constructor.Smartphone;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -55,23 +58,23 @@ class ConstructorMetadataBuilderTest {
     public void shouldReturnEmptyMetadata() {
         ConstructorMetadata metadata = builder.build(Person.class);
         Assertions.assertNotNull(metadata);
-        Assertions.assertTrue(metadata.getParameters().isEmpty());
+        Assertions.assertTrue(metadata.parameters().isEmpty());
     }
 
     @Test
     public void shouldReturnEmptyDefaultConstructor() {
         ConstructorMetadata metadata = builder.build(Worker.class);
         Assertions.assertNotNull(metadata);
-        Assertions.assertTrue(metadata.getParameters().isEmpty());
+        Assertions.assertTrue(metadata.parameters().isEmpty());
     }
 
     @Test
     public void shouldReturnComputerEntityConstructor() {
         ConstructorMetadata metadata = builder.build(Computer.class);
-        List<ParameterMetaData> parameters = metadata.getParameters();
+        List<ParameterMetaData> parameters = metadata.parameters();
         assertEquals(5, parameters.size());
         List<String> names = parameters.stream()
-                .map(ParameterMetaData::getName)
+                .map(ParameterMetaData::name)
                 .toList();
 
         assertThat(names).contains("_id", "name", "age", "model", "price");
@@ -80,22 +83,34 @@ class ConstructorMetadataBuilderTest {
     @Test
     public void shouldReturnBookUserEntityConstructor() {
         ConstructorMetadata metadata = builder.build(BookUser.class);
-        List<ParameterMetaData> parameters = metadata.getParameters();
+        List<ParameterMetaData> parameters = metadata.parameters();
         assertEquals(3, parameters.size());
         List<String> names = parameters.stream()
-                .map(ParameterMetaData::getName)
+                .map(ParameterMetaData::name)
                 .toList();
 
         assertThat(names).contains("_id", "native_name", "books");
     }
 
     @Test
+    public void shouldReturnSmartphoneEntityConstructor() {
+        ConstructorMetadata metadata = builder.build(Smartphone.class);
+        List<ParameterMetaData> parameters = metadata.parameters();
+        assertEquals(2, parameters.size());
+        List<String> names = parameters.stream()
+                .map(ParameterMetaData::name)
+                .toList();
+
+        assertThat(names).contains("_id", "owner");
+    }
+
+    @Test
     public void shouldReturnPetOwnerEntityConstructor() {
         ConstructorMetadata metadata = builder.build(PetOwner.class);
-        List<ParameterMetaData> parameters = metadata.getParameters();
+        List<ParameterMetaData> parameters = metadata.parameters();
         assertEquals(3, parameters.size());
         List<String> names = parameters.stream()
-                .map(ParameterMetaData::getName)
+                .map(ParameterMetaData::name)
                 .toList();
 
         assertThat(names).contains("_id", "name", "animal");
