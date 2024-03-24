@@ -8,6 +8,82 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 
 == [Unreleased]
 
+=== Changed
+
+- Upgrade Jakarta Data to version 1.0.0-M3
+
+=== Added
+
+- Introduce NoSQLRepository
+- Include the semistructured layers (mapping and communication)
+- Include Column and Document Templates
+- Include support to Embedded and EmbeddedCollection as group
+
+=== Removed
+
+- Remove column and document from communication API.
+
+== [1.1.0] - 2023-02-05
+
+=== Changed
+
+- Upgrade Jakarta Data to version 1.0.0-M2
+
+=== Added
+
+- Add support to operations annotations (Insert, Update, Delete and Save) from Jakarta Data
+- Add support to match parameters
+
+=== Fixed
+
+- Enhance query at Template for Inheritance (Document, Column, and Graph)
+- Enhance query at Repository for Inheritance (Document and Column)
+- Fix MapReader when reads to an interaction of elements or a list of maps
+
+== [1.0.4] - 2023-12-19
+
+=== Fixed
+
+- Fix serialization when the entity has constructor with simple generic types
+- null Embeddable list of nested object cannot be saved
+
+=== Changed
+
+- Change package name to avoid duplicated name in different modules
+
+== [1.0.3] - 2023-12-02
+
+=== Changed
+
+- Add support to boolean values at the queries declaration
+- Make null a valid value
+
+== [1.0.2] - 2023-10-01
+
+=== Added
+
+- Create Metadata API project
+- Enhance the reflection documentation
+- Add support to delete by entities
+- Add support to Custom Repositories
+- Create KeyValueDatabase annotation
+
+=== Changed
+
+- Define metadata as a module
+- define the default implementation of metadata using reflection
+- enhance the documentation to use metadata
+- Update Apache Tinkerpop to version 3.7.0
+- Update classpath to version 4.8.162
+- Update Mockito version to 5.5.0
+
+=== Fixed
+
+- Remove exception at the delete methods at the repositories proxies
+- Add support to LIKE conditions parameterized at Repository methods annotated with `@Query`
+- Enhance the error message when the entity in the repository does not have the Entity annotation
+- query specification does not allow for dashes in table names
+
 == [1.0.1] - 2023-7-31
 
 == Fixed

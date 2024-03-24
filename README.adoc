@@ -52,22 +52,22 @@ Theses annotations from the Mapping API will look familiar to the Jakarta Persis
 |`@jakarta.nosql.Column`
 |Specify the mapped column for a persistent property or field.
 
-|`@org.eclipse.jnosql.mapping.Embeddable`
+|`@jakarta.nosql.Embeddable`
 |Specifies a class whose instances are stored as an intrinsic part of an owning entity and share the entity's identity.
 
-|`@org.eclipse.jnosql.mapping.Convert`
+|`@jakarta.nosql.Convert`
 |Specifies the conversion of a Basic field or property.
 
 |`@org.eclipse.jnosql.mapping.MappedSuperclass`
 |Designates a class whose mapping information is applied to the entities that inherit from it. A mapped superclass has no separate table defined for it.
 
-|`@org.eclipse.jnosql.mapping.Inheritance`
+|`@jakarta.nosql.Inheritance`
 |Specifies the inheritance strategy to be used for an entity class hierarchy.
 
-|`@org.eclipse.jnosql.mapping.DiscriminatorColumn`
+|`@jakarta.nosql.DiscriminatorColumn`
 |Specifies the discriminator column for the mapping strategy.
 
-|`@org.eclipse.jnosql.mapping.DiscriminatorValue`
+|`@jakarta.nosql.DiscriminatorValue`
 |Specifies the value of the discriminator column for entities of the given type.
 
 
@@ -153,7 +153,7 @@ Eclipse JNoSQL offers a mapping implementation for Key-Value NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-key-value</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ----
 
@@ -236,6 +236,38 @@ public BucketManager getManagerB() {
 }
 ----
 
+
+The KeyValue Database module provides a simple way to integrate the `KeyValueDatabase` annotation with CDI, allowing you to inject collections managed by the key-value database. This annotation works seamlessly with various collections, such as List, Set, Queue, and Map.
+
+To inject collections managed by the key-value database, use the `@KeyValueDatabase` annotation in combination with CDI's `@Inject` annotation. Here's how you can use it:
+
+[source,java]
+----
+import javax.inject.Inject;
+
+// Inject a List<String> instance from the "names" bucket in the key-value database.
+@Inject
+@KeyValueDatabase("names")
+private List<String> names;
+
+// Inject a Set<String> instance from the "fruits" bucket in the key-value database.
+@Inject
+@KeyValueDatabase("fruits")
+private Set<String> fruits;
+
+// Inject a Queue<String> instance from the "orders" bucket in the key-value database.
+@Inject
+@KeyValueDatabase("orders")
+private Queue<String> orders;
+
+// Inject a Map<String, String> instance from the "orders" bucket in the key-value database.
+@Inject
+@KeyValueDatabase("orders")
+private Map<String, String> map;
+----
+
+
+
 === Column Family
 
 Jakarta NoSQL provides a Column Family template to explore the specific behavior of this NoSQL type.
@@ -246,7 +278,7 @@ Eclipse JNoSQL offers a mapping implementation for Column NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-column</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ----
 
@@ -292,15 +324,16 @@ These configuration settings are the default behavior. Nevertheless, there is an
 @Alternative
 @Priority(Interceptor.Priority.APPLICrATION)
 @ApplicationScoped
-public class ManagerSupplier implements Supplier<ColumnManager> {
+public class ManagerSupplier implements Supplier<DatabaseManager> {
 
     @Produces
-    public ColumnManager get() {
+    @Database(DatabaseType.COLUMN)
+    public DatabaseManager get() {
         Settings settings = Settings.builder()
                 .put("credential", "value")
                 .build();
-        ColumnConfiguration configuration = new NoSQLColumnProvider();
-        ColumnManagerFactory factory = configuration.apply(settings);
+        DatabaseConfiguration configuration = new NoSQLColumnProvider();
+        DatabaseManagerFactory factory = configuration.apply(settings);
         return factory.apply("database");
     }
 }
@@ -343,7 +376,7 @@ Eclipse JNoSQL offers a mapping implementation for Document NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-document</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ----
 
@@ -390,15 +423,16 @@ These configuration settings are the default behavior. Nevertheless, there is an
 @Alternative
 @Priority(Interceptor.Priority.APPLICATION)
 @ApplicationScoped
-public class ManagerSupplier implements Supplier<DocumentManager> {
+public class ManagerSupplier implements Supplier<DatabaseManager> {
 
     @Produces
-    public DocumentManager get() {
+    @Database(DatabaseType.DOCUMENT)
+    public DatabaseManager get() {
         Settings settings = Settings.builder()
                 .put("credential", "value")
                 .build();
-        DocumentConfiguration configuration = new NoSQLDocumentProvider();
-        DocumentManagerFactory factory = configuration.apply(settings);
+        DatabaseConfiguration configuration = new NoSQLDocumentProvider();
+        DatabaseManagerFactory factory = configuration.apply(settings);
         return factory.apply("database");
     }
 }
@@ -441,7 +475,7 @@ Eclipse JNoSQL offers a mapping implementation for Graph NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-graph</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ----
 
@@ -676,11 +710,11 @@ Please take a look link:TESTING-GUIDELINE.adoc[at the file].
 
 == Migration
 
-This migration guide explains how to upgrade from Eclipse JNoSQL version 1.0.0-b6 to the latest version, taking into account two significant changes: upgrading to Jakarta EE 9 and reducing the scope of the Jakarta NoSQL specification to only run on the Mapping. The guide provides instructions on how to update package names and annotations to successfully migrate your Eclipse JNoSQL project.
+This migration guide explains how to upgrade from Eclipse JNoSQL version 1.0.0-b6 to the latest version, considering two significant changes: upgrading to Jakarta EE 9 and reducing the scope of the Jakarta NoSQL specification to only run on the Mapping. The guide provides instructions on updating package names and annotations to migrate your Eclipse JNoSQL project successfully.
 
 link:MIGRATION.adoc[Migration Guide]
 
-== For know more
+== To know more
 
 If you want to know more about both the communication and mapping layer, there are two complementary files for it each specific topic:
 

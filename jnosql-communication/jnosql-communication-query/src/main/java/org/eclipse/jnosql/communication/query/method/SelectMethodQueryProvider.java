@@ -12,8 +12,8 @@
 package org.eclipse.jnosql.communication.query.method;
 
 import org.antlr.v4.runtime.tree.ParseTree;
-import jakarta.data.repository.Sort;
-import jakarta.data.repository.Direction;
+import jakarta.data.Sort;
+import jakarta.data.Direction;
 import org.eclipse.jnosql.communication.query.SelectQuery;
 import org.eclipse.jnosql.query.grammar.method.MethodParser;
 
@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 public final class SelectMethodQueryProvider extends AbstractMethodQueryProvider implements BiFunction<String, String, SelectQuery> {
 
-    private final List<Sort> sorts = new ArrayList<>();
+    private final List<Sort<?>> sorts = new ArrayList<>();
 
     @Override
     public SelectQuery apply(String query, String entity) {

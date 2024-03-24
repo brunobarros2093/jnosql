@@ -16,9 +16,8 @@ package org.eclipse.jnosql.mapping.keyvalue;
 
 
 import jakarta.data.exceptions.NonUniqueResultException;
-import jakarta.nosql.PreparedStatement;
+import org.eclipse.jnosql.mapping.PreparedStatement;
 import jakarta.nosql.QueryMapper;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
 import org.eclipse.jnosql.communication.Value;
 import org.eclipse.jnosql.communication.keyvalue.BucketManager;
 import org.eclipse.jnosql.communication.keyvalue.KeyValueEntity;
@@ -114,6 +113,7 @@ public abstract class AbstractKeyValueTemplate implements KeyValueTemplate {
                 .map(e -> getConverter().toEntity(type, e.get()))
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public <K> void delete(K key) {

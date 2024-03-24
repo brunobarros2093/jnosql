@@ -15,14 +15,15 @@
 package org.eclipse.jnosql.mapping.keyvalue.query;
 
 import jakarta.inject.Inject;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.keyvalue.KeyValueTemplate;
 import org.eclipse.jnosql.communication.keyvalue.BucketManager;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.keyvalue.KeyValueEntityConverter;
 import org.eclipse.jnosql.mapping.keyvalue.MockProducer;
 import org.eclipse.jnosql.mapping.keyvalue.spi.KeyValueExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
-import org.eclipse.jnosql.mapping.test.entities.PersonRepository;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.keyvalue.entities.PersonRepository;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -34,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @EnableAutoWeld
 @AddPackages(value = {Converters.class, KeyValueEntityConverter.class})
 @AddPackages(MockProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, KeyValueExtension.class})
 class KeyValueRepositoryProducerTest {
 
@@ -41,14 +43,14 @@ class KeyValueRepositoryProducerTest {
     private KeyValueRepositoryProducer producer;
 
     @Test
-    public void shouldCreateFromManager() {
+    void shouldCreateFromManager() {
         BucketManager manager = Mockito.mock(BucketManager.class);
         PersonRepository personRepository = producer.get(PersonRepository.class, manager);
         assertNotNull(personRepository);
     }
 
     @Test
-    public void shouldCreateFromTemplate() {
+    void shouldCreateFromTemplate() {
         KeyValueTemplate template = Mockito.mock(KeyValueTemplate.class);
         PersonRepository personRepository = producer.get(PersonRepository.class, template);
         assertNotNull(personRepository);

@@ -26,41 +26,53 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class GetQueryTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class GetQueryTest {
 
     @ParameterizedTest
     @ArgumentsSource(GetQueryArgumentProvider.class)
-    public void shouldExecuteQuery(String query) {
+    void shouldExecuteQuery(String query) {
         testQuery(query);
     }
 
     @Test
-    public void shouldIgnoreComments() {
+    void shouldIgnoreComments() {
         testQuery("//ignore this line \n get 12");
     }
 
     @ParameterizedTest
     @ArgumentsSource(WrongGetQueryArgumentProvider.class)
-    public void shouldNotExecute(String query) {
+    void shouldNotExecute(String query) {
         Assertions.assertThrows(QueryException.class, () -> testQuery(query));
     }
 
     @Test
-    public void shouldCreateFromMethodFactory(){
+    void shouldCreateFromMethodFactory(){
         GetQuery query = GetQuery.parse("get \"Ada Lovelace\"");
         Assertions.assertNotNull(query);
     }
 
     @Test
-    public void shouldEquals(){
+    void shouldEquals(){
         String text = "get \"Ada Lovelace\"";
+        GetQuery query = GetQuery.parse(text);
         Assertions.assertEquals(GetQuery.parse(text), GetQuery.parse(text));
+        Assertions.assertEquals(query, query);
+        Assertions.assertNotEquals(query, text);
     }
 
     @Test
-    public void shouldHashCode() {
+    void shouldHashCode() {
         String text = "get \"Ada Lovelace\"";
         Assertions.assertEquals(GetQuery.parse(text).hashCode(), GetQuery.parse(text).hashCode());
+    }
+
+    @Test
+    void shouldToString(){
+        String text = "get \"Ada Lovelace\"";
+        assertThat((GetQuery.parse(text).toString()))
+                .isEqualTo("['Ada Lovelace']");
     }
 
     private void testQuery(String query) {

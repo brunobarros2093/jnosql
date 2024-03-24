@@ -12,6 +12,7 @@
  */
 package org.eclipse.jnosql.communication;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,14 +27,14 @@ class ParamsTest {
 
     @Test
     @DisplayName("Should create a new Params from a method factory Params.newParams()")
-    void testNewParams() {
+    void shouldNewParams() {
         Params params = Params.newParams();
         assertThat(params).isInstanceOf(Params.class).isNotNull();
     }
 
     @Test
     @DisplayName("Should not use Value when is invalid")
-    public void shouldNotUseValueWhenIsInvalid() {
+    void shouldNotUseValueWhenIsInvalid() {
         String paramValue = UUID.randomUUID().toString();
 
         Params params = Params.newParams();
@@ -48,27 +49,36 @@ class ParamsTest {
         });
     }
 
+    @Test
+    void shouldPrefix(){
+        Params params = Params.newParams();
+        Value value = params.add("name_2342342");
+        params.prefix("name", "Ada");
+        Assertions.assertTrue(params.isNotEmpty());
+        Assertions.assertEquals("Ada", value.get());
+    }
+
     @Nested
     @DisplayName("Given an empty Params")
     class GivenEmptyParamsTest {
 
         @Test
         @DisplayName("then toString() should return an empty string")
-        void testToString() {
+        void shouldToString() {
             Params params = Params.newParams();
             assertThat(params.toString()).isEmpty();
         }
 
         @Test
         @DisplayName("and isNotEmpty() returns false")
-        void testIsNotEmpty() {
+        void shouldIsNotEmpty() {
             Params params = Params.newParams();
             assertThat(params.isNotEmpty()).isFalse();
         }
 
         @Test
         @DisplayName("and getParametersNames() should returns an empty List<String>")
-        void testGetParametersNames() {
+        void shouldGetParametersNames() {
             Params params = Params.newParams();
             assertThat(params.getParametersNames()).isNotNull().isEmpty();
         }
@@ -125,7 +135,7 @@ class ParamsTest {
     @DisplayName("given a filled Params")
     class GivenFilledParamsTest {
 
-        class Scenario {
+        static class Scenario {
 
             final Params params;
             final List<String> parameterNameList;
@@ -161,7 +171,7 @@ class ParamsTest {
             Scenario scenario = newScenario();
             Params params = scenario.params;
 
-            assertThat(params.toString()).isEqualTo(String.join(",", scenario.parameterNameList));
+            assertThat(params).hasToString(String.join(",", scenario.parameterNameList));
         }
 
         @Test

@@ -16,9 +16,11 @@ package org.eclipse.jnosql.mapping.graph;
 
 import jakarta.inject.Inject;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
 import org.eclipse.jnosql.mapping.graph.spi.GraphExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -29,32 +31,26 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @EnableAutoWeld
-@AddPackages(value = {Converters.class, Transactional.class})
-@AddPackages(BookRepository.class)
+@AddPackages(value = {Converters.class, EntityConverter.class, GraphTemplate.class})
+@AddPackages(GraphProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, GraphExtension.class})
-public class GraphTemplateProducerTest {
+class GraphTemplateProducerTest {
 
     @Inject
     private GraphTemplateProducer producer;
 
     @Test
-    public void shouldReturnErrorWhenManagerNull() {
-        assertThrows(NullPointerException.class, () -> producer.get((Graph) null));
-        assertThrows(NullPointerException.class, () -> producer.get((GraphTraversalSourceSupplier) null));
+    void shouldReturnErrorWhenManagerNull() {
+        assertThrows(NullPointerException.class, () -> producer.apply(null));
     }
 
     @Test
-    public void shouldReturnGraphTemplateWhenGetGraph() {
+    void shouldReturnGraphTemplateWhenGetGraph() {
         Graph graph = Mockito.mock(Graph.class);
-        GraphTemplate template = producer.get(graph);
+        GraphTemplate template = producer.apply(graph);
         assertNotNull(template);
     }
 
 
-    @Test
-    public void shouldReturnGraphTemplateWhenGetGraphTraversalSourceSupplier() {
-        GraphTraversalSourceSupplier supplier = Mockito.mock(GraphTraversalSourceSupplier.class);
-        GraphTemplate template = producer.get(supplier);
-        assertNotNull(template);
-    }
 }

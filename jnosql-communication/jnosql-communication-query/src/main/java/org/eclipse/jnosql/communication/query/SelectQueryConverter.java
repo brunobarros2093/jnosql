@@ -12,9 +12,10 @@
 
 package org.eclipse.jnosql.communication.query;
 
+
 import org.antlr.v4.runtime.tree.ParseTree;
-import jakarta.data.repository.Sort;
-import jakarta.data.repository.Direction;
+import jakarta.data.Sort;
+import jakarta.data.Direction;
 import org.eclipse.jnosql.query.grammar.QueryParser;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public final class SelectQueryConverter extends AbstractWhereSupplier implements
 
     private List<String> fields = emptyList();
 
-    private List<Sort> sorts = emptyList();
+    private List<Sort<?>> sorts = emptyList();
 
     private long skip;
 
@@ -77,7 +78,7 @@ public final class SelectQueryConverter extends AbstractWhereSupplier implements
         return QueryParser::select;
     }
 
-    private Sort sort(QueryParser.OrderNameContext context) {
+    private Sort<?> sort(QueryParser.OrderNameContext context) {
         String text = context.name().getText();
         Direction type = context.desc() == null? Direction.ASC: Direction.DESC;
         return Sort.of(text, type, false);

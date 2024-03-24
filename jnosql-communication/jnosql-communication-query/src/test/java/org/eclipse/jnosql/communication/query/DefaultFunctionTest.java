@@ -16,11 +16,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class DefaultFunctionTest {
 
     @Test
-    public void shouldReturnType() {
+    void shouldReturnType() {
         Function function = DefaultFunction.of("sum", new Object[]{1, 2});
         assertThat(function).isNotNull()
                 .extracting(Function::name).isEqualTo("sum");
@@ -29,23 +30,31 @@ class DefaultFunctionTest {
     }
 
     @Test
-    public void shouldReturnValue(){
+    void shouldReturnValue(){
         Function function = DefaultFunction.of("sum", new Object[]{1, 2});
         assertThat(function).extracting(Function::params)
                 .isEqualTo(new Object[]{1, 2});
     }
 
     @Test
-    public void shouldReturnEquals(){
+    void shouldReturnEquals(){
         Function f = DefaultFunction.of("sum", new Object[]{1, 2});
         Function f2 = DefaultFunction.of("sum", new Object[]{1, 2});
         assertEquals(f, f2);
+        assertEquals(f, f);
+        assertNotEquals(f, "sum");
     }
 
     @Test
-    public void shouldReturnHashCode() {
+    void shouldReturnHashCode() {
         Function f = DefaultFunction.of("sum", new Object[]{1, 2});
         Function f2 = DefaultFunction.of("sum", new Object[]{1, 2});
         assertEquals(f.hashCode(), f2.hashCode());
+    }
+
+    @Test
+    void shouldToString(){
+        var f = DefaultFunction.of("sum", new Object[]{1, 2});
+        assertEquals("sum([1, 2])", f.toString());
     }
 }

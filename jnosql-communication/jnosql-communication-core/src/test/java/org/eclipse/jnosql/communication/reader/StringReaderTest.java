@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
-public class StringReaderTest {
+class StringReaderTest {
 
     private final ValueReader valueReader = new StringReader();
 
@@ -57,6 +57,7 @@ public class StringReaderTest {
             softly.assertThat(valueReader.read(CharSequence.class, 10.0)).as("Number compatible").isEqualTo("10.0");
             softly.assertThat(valueReader.read(CharSequence.class, 10)).as("CharSequence compatible").isEqualTo("10");
             softly.assertThat(valueReader.read(String.class, 10)).as("String compatible").isEqualTo("10");
+            softly.assertThat(valueReader.read(String.class, null)).as("null value compatible").isEqualTo(null);
         });
     }
 }

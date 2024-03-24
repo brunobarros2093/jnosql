@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DefaultArrayQueryValueTest {
 
     @Test
-    public void shouldReturnArrayType() {
+    void shouldReturnArrayType() {
         ArrayQueryValue array = DefaultArrayQueryValue.of(new QueryValue<?>[]{
                 BooleanQueryValue.FALSE});
         assertThat(array).isNotNull();
@@ -28,27 +28,36 @@ class DefaultArrayQueryValueTest {
     }
 
     @Test
-    public void shouldReturnArrayValue() {
+    void shouldReturnArrayValue() {
         ArrayQueryValue array = DefaultArrayQueryValue.of(new QueryValue<?>[]{
                 BooleanQueryValue.FALSE, BooleanQueryValue.TRUE});
         assertThat(array.get()).containsExactly(BooleanQueryValue.FALSE, BooleanQueryValue.TRUE);
     }
 
     @Test
-    public void shouldEquals(){
+    void shouldEquals(){
         ArrayQueryValue array = DefaultArrayQueryValue.of(new QueryValue<?>[]{
                 BooleanQueryValue.FALSE, BooleanQueryValue.TRUE});
         ArrayQueryValue arrayB = DefaultArrayQueryValue.of(new QueryValue<?>[]{
                 BooleanQueryValue.FALSE, BooleanQueryValue.TRUE});
         Assertions.assertEquals(arrayB, array);
+        Assertions.assertEquals(array, array);
+        Assertions.assertNotEquals(array, "array");
     }
 
     @Test
-    public void shouldHashCode(){
+    void shouldHashCode(){
         ArrayQueryValue array = DefaultArrayQueryValue.of(new QueryValue<?>[]{
                 BooleanQueryValue.FALSE, BooleanQueryValue.TRUE});
         ArrayQueryValue arrayB = DefaultArrayQueryValue.of(new QueryValue<?>[]{
                 BooleanQueryValue.FALSE, BooleanQueryValue.TRUE});
         Assertions.assertEquals(arrayB.hashCode(), array.hashCode());
+    }
+
+    @Test
+    void shouldToString(){
+        ArrayQueryValue array = DefaultArrayQueryValue.of(new QueryValue<?>[]{
+                BooleanQueryValue.FALSE, BooleanQueryValue.TRUE});
+        assertThat(array.toString()).isEqualTo("[BooleanQueryValue{value=false}, BooleanQueryValue{value=true}]");
     }
 }

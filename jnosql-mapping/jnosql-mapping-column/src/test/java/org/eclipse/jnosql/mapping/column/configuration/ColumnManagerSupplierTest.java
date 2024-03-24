@@ -16,26 +16,29 @@ package org.eclipse.jnosql.mapping.column.configuration;
 
 import jakarta.data.exceptions.MappingException;
 import jakarta.inject.Inject;
-import org.eclipse.jnosql.communication.column.ColumnManager;
-import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.column.ColumnEntityConverter;
+import org.eclipse.jnosql.communication.semistructured.DatabaseManager;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.column.MockProducer;
 import org.eclipse.jnosql.mapping.column.spi.ColumnExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.eclipse.jnosql.mapping.config.MappingConfigurations.COLUMN_DATABASE;
-import static org.eclipse.jnosql.mapping.config.MappingConfigurations.COLUMN_PROVIDER;
+import static org.eclipse.jnosql.mapping.core.config.MappingConfigurations.COLUMN_DATABASE;
+import static org.eclipse.jnosql.mapping.core.config.MappingConfigurations.COLUMN_PROVIDER;
 
 @EnableAutoWeld
-@AddPackages(value = {Converters.class, ColumnEntityConverter.class})
+@AddPackages(value = {Converters.class, EntityConverter.class})
 @AddPackages(MockProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, ColumnExtension.class})
 class ColumnManagerSupplierTest {
 
@@ -43,40 +46,47 @@ class ColumnManagerSupplierTest {
     private ColumnManagerSupplier supplier;
 
     @BeforeEach
-    public void beforeEach(){
+    void beforeEach(){
         System.clearProperty(COLUMN_PROVIDER.get());
         System.clearProperty(COLUMN_DATABASE.get());
     }
 
     @Test
-    public void shouldGetManager() {
+    void shouldGetManager() {
         System.setProperty(COLUMN_PROVIDER.get(), ColumnConfigurationMock.class.getName());
         System.setProperty(COLUMN_DATABASE.get(), "database");
-        ColumnManager manager = supplier.get();
+        DatabaseManager manager = supplier.get();
         Assertions.assertNotNull(manager);
         assertThat(manager).isInstanceOf(ColumnConfigurationMock.ColumnManagerMock.class);
     }
 
 
     @Test
-    public void shouldUseDefaultConfigurationWhenProviderIsWrong() {
+    void shouldUseDefaultConfigurationWhenProviderIsWrong() {
         System.setProperty(COLUMN_PROVIDER.get(), Integer.class.getName());
         System.setProperty(COLUMN_DATABASE.get(), "database");
-        ColumnManager manager = supplier.get();
+        DatabaseManager manager = supplier.get();
         Assertions.assertNotNull(manager);
         assertThat(manager).isInstanceOf(ColumnConfigurationMock2.ColumnManagerMock.class);
     }
 
     @Test
-    public void shouldUseDefaultConfiguration() {
+    void shouldUseDefaultConfiguration() {
         System.setProperty(COLUMN_DATABASE.get(), "database");
-        ColumnManager manager = supplier.get();
+        DatabaseManager manager = supplier.get();
         Assertions.assertNotNull(manager);
         assertThat(manager).isInstanceOf(ColumnConfigurationMock2.ColumnManagerMock.class);
     }
 
     @Test
-    public void shouldReturnErrorWhenThereIsNotDatabase() {
+    void shouldReturnErrorWhenThereIsNotDatabase() {
         Assertions.assertThrows(MappingException.class, () -> supplier.get());
+    }
+
+    @Test
+    void shouldClose(){
+        DatabaseManager manager = Mockito.mock(DatabaseManager.class);
+        supplier.close(manager);
+        Mockito.verify(manager).close();
     }
 }

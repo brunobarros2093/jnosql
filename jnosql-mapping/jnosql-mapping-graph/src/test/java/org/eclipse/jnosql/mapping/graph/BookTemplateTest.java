@@ -18,11 +18,13 @@ import jakarta.inject.Inject;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Transaction.Status;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
 import org.eclipse.jnosql.mapping.graph.entities.Book;
 import org.eclipse.jnosql.mapping.graph.entities.BookTemplate;
 import org.eclipse.jnosql.mapping.graph.spi.GraphExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -32,13 +34,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.tinkerpop.gremlin.structure.Transaction.Status.COMMIT;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.Status.ROLLBACK;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableAutoWeld
-@AddPackages(value = {Converters.class, Transactional.class})
-@AddPackages(BookRepository.class)
+@AddPackages(value = {Converters.class, EntityConverter.class, GraphTemplate.class})
+@AddPackages(GraphProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, GraphExtension.class})
-public class BookTemplateTest {
+class BookTemplateTest {
 
     @Inject
     private BookTemplate template;
@@ -47,7 +53,7 @@ public class BookTemplateTest {
     private Graph graph;
 
     @Test
-    public void shouldSaveWithTransaction() {
+    void shouldSaveWithTransaction() {
         AtomicReference<Status> status = new AtomicReference<>();
 
         Book book = Book.builder().withName("The Book").build();
@@ -59,7 +65,7 @@ public class BookTemplateTest {
     }
 
     @Test
-    public void shouldSaveWithRollback() {
+    void shouldSaveWithRollback() {
         AtomicReference<Status> status = new AtomicReference<>();
 
         Book book = Book.builder().withName("The Book").build();
@@ -77,7 +83,7 @@ public class BookTemplateTest {
     }
 
     @Test
-    public void shouldUseAutomaticNormalTransaction() {
+    void shouldUseAutomaticNormalTransaction() {
         AtomicReference<Status> status = new AtomicReference<>();
 
         Book book = Book.builder().withName("The Book").build();
@@ -85,8 +91,8 @@ public class BookTemplateTest {
         transaction.addTransactionListener(status::set);
         assertNull(status.get());
         template.normalInsertion(book);
-        assertTrue(transaction.isOpen());
         assertEquals(COMMIT, status.get());
+        assertFalse(transaction.isOpen());
     }
 }
 

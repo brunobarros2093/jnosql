@@ -22,17 +22,19 @@ import java.util.Objects;
 /**
  * Defines the default implementation of {@link Value}
  */
-final class DefaultValue  implements Value {
+record DefaultValue(Object value)  implements Value {
 
+    /**
+     * A constant {@link Value} instance representing a null value.
+     * This instance is often used to signify the absence of a meaningful value.
+     * It is commonly employed in scenarios where a valid value is expected but none is available.
+     * The {@code NULL} instance is immutable and can be used to compare against other {@link Value} instances
+     * to determine if they encapsulate a null value.
+     */
+    public static final Value NULL = NullValue.INSTANCE;
     private static final ValueReader SERVICE_PROVIDER = ValueReaderDecorator.getInstance();
 
     private static final  TypeReferenceReader REFERENCE_READER = TypeReferenceReaderDecorator.getInstance();
-
-    private final Object value;
-
-    DefaultValue(Object value) {
-        this.value = value;
-    }
 
 
     @Override
@@ -48,6 +50,7 @@ final class DefaultValue  implements Value {
 
     @Override
     public <T> T get(TypeSupplier<T> supplier) {
+        Objects.requireNonNull(supplier, "supplier is required");
         if (REFERENCE_READER.test(Objects.requireNonNull(supplier, "supplier is required"))) {
             return REFERENCE_READER.convert(supplier, value);
         }
@@ -60,16 +63,20 @@ final class DefaultValue  implements Value {
         return typeClass.isInstance(value);
     }
 
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Value)) {
+        if (!(o instanceof Value that)) {
             return false;
         }
-        Value that = (Value) o;
         return Objects.equals(value, that.get());
     }
 
@@ -78,9 +85,4 @@ final class DefaultValue  implements Value {
         return Objects.hashCode(value);
     }
 
-    @Override
-    public String toString() {
-        return "DefaultValue{" + "value=" + value +
-                '}';
-    }
 }

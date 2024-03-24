@@ -1,16 +1,16 @@
 /*
- *  Copyright (c) 2022 Contributors to the Eclipse Foundation
- *   All rights reserved. This program and the accompanying materials
- *   are made available under the terms of the Eclipse Public License v1.0
- *   and Apache License v2.0 which accompanies this distribution.
- *   The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
- *   and the Apache License v2.0 is available at http://www.opensource.org/licenses/apache2.0.php.
+ *   Copyright (c) 2023 Contributors to the Eclipse Foundation
+ *    All rights reserved. This program and the accompanying materials
+ *    are made available under the terms of the Eclipse Public License v1.0
+ *    and Apache License v2.0 which accompanies this distribution.
+ *    The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ *    and the Apache License v2.0 is available at http://www.opensource.org/licenses/apache2.0.php.
  *
- *   You may elect to redistribute this code under either of these licenses.
+ *    You may elect to redistribute this code under either of these licenses.
  *
- *   Contributors:
+ *    Contributors:
  *
- *   Otavio Santana
+ *    Otavio Santana
  */
 package org.eclipse.jnosql.mapping.graph.entities;
 
@@ -18,7 +18,7 @@ package org.eclipse.jnosql.mapping.graph.entities;
 import jakarta.nosql.Column;
 import jakarta.nosql.Entity;
 import jakarta.nosql.Id;
-import org.eclipse.jnosql.mapping.MappedSuperclass;
+import jakarta.nosql.MappedSuperclass;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +28,7 @@ import java.util.Objects;
 public class Person {
 
     @Id
-    private Long id;
+    private long id;
 
     @Column
     private String name;
@@ -42,7 +42,7 @@ public class Person {
     private String ignore;
 
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
@@ -69,7 +69,7 @@ public class Person {
     Person() {
     }
 
-    Person(Long id, String name, int age, List<String> phones, String ignore) {
+    Person(long id, String name, int age, List<String> phones, String ignore) {
         this.id = id;
         this.name = name;
         this.age = age;
@@ -92,19 +92,26 @@ public class Person {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Person)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         Person person = (Person) o;
-        return Objects.equals(id, person.id);
+        return id == person.id &&
+                age == person.age &&
+                Objects.equals(name, person.name) &&
+                Objects.equals(phones, person.phones);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hash(id, name, age, phones, ignore);
     }
 
     public static PersonBuilder builder() {
         return new PersonBuilder();
+    }
+
+    public void setName(String name){
+        this.name = name;
     }
 }

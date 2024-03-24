@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.eclipse.jnosql.mapping</groupId>
         <artifactId>jnosql-mapping-parent</artifactId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>jnosql-mapping-graph</artifactId>
@@ -29,16 +29,14 @@
         <antlr4.version>4.9.3</antlr4.version>
         <!-- it's required by the 'org.neo4j' libraries  -->
         <argLine> --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/sun.nio.ch=ALL-UNNAMED </argLine>
+
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.eclipse.jnosql.mapping</groupId>
-            <artifactId>jnosql-mapping-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jnosql.communication</groupId>
-            <artifactId>jnosql-communication-query</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jnosql-mapping-semistructured</artifactId>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.antlr</groupId>

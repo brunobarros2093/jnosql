@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class NumberQueryValueTest {
 
     @Test
-    public void shouldReturnType() {
+    void shouldReturnType() {
         NumberQueryValue queryValue = new NumberQueryValue(10);
 
         Assertions.assertThat(queryValue.type())
@@ -27,7 +27,7 @@ class NumberQueryValueTest {
     }
 
     @Test
-    public void shouldReturnGet() {
+    void shouldReturnGet() {
         NumberQueryValue queryValue = new NumberQueryValue(10);
 
         Assertions.assertThat(queryValue.get())
@@ -35,14 +35,22 @@ class NumberQueryValueTest {
     }
 
     @Test
-    public void shouldEquals() {
+    void shouldEquals() {
+        NumberQueryValue value = new NumberQueryValue(10);
         assertEquals(new NumberQueryValue(10), new NumberQueryValue(10));
-
+        assertNotEquals(new NumberQueryValue(10), new NumberQueryValue(1));
+        assertEquals(value, value);
+        assertNotEquals(value, "value");
     }
 
     @Test
-    public void shouldHashCode() {
+    void shouldHashCode() {
         assertEquals(new NumberQueryValue(10).hashCode(), new NumberQueryValue(10).hashCode());
+    }
+
+    @Test
+    void shouldToString(){
+        assertEquals("10", new NumberQueryValue(10).toString());
     }
 
 }

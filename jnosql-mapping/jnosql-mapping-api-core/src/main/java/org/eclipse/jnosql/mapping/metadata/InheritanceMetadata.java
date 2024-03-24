@@ -17,59 +17,17 @@ package org.eclipse.jnosql.mapping.metadata;
 import java.util.Objects;
 
 /**
- * The mapping information about {@link org.eclipse.jnosql.mapping.Inheritance}
+ * The mapping information about {@link jakarta.nosql.Inheritance}
+ *
+ * @param discriminatorValue  the information from the annotation {@link jakarta.nosql.DiscriminatorValue}
+ *                            from entity or the {@link Class#getSimpleName()} of the entity
+ * @param discriminatorColumn the information parent from the annotation {@link jakarta.nosql.DiscriminatorColumn}
+ *                            * or the "type"
+ * @param parent              the parent class
+ * @param entity              the entity class
  */
-public final class InheritanceMetadata {
-
-    private final String discriminatorValue;
-
-    private final String discriminatorColumn;
-
-    private final Class<?> parent;
-
-    private final Class<?> entity;
-
-    public InheritanceMetadata(String discriminatorValue, String discriminatorColumn, Class<?> parent
-    , Class<?> entity) {
-        this.discriminatorValue = discriminatorValue;
-        this.discriminatorColumn = discriminatorColumn;
-        this.parent = parent;
-        this.entity = entity;
-    }
-
-    /**
-     * Return the information from the class the annotation {@link org.eclipse.jnosql.mapping.DiscriminatorValue}
-     * or the {@link Class#getSimpleName()}.
-     *
-     * @return the {@link org.eclipse.jnosql.mapping.DiscriminatorValue} from entity
-     */
-    public String discriminatorValue() {
-        return discriminatorValue;
-    }
-
-    /**
-     * Return the information parent from the annotation {@link org.eclipse.jnosql.mapping.DiscriminatorColumn}
-     * or the "type".
-     *
-     * @return the {@link org.eclipse.jnosql.mapping.DiscriminatorValue} from entity
-     */
-    public String discriminatorColumn() {
-        return discriminatorColumn;
-    }
-
-    /**
-     * @return The parent class
-     */
-    public Class<?> parent() {
-        return parent;
-    }
-
-    /**
-     * @return the entity class
-     */
-    public Class<?> entity() {
-        return entity;
-    }
+public record InheritanceMetadata(String discriminatorValue, String discriminatorColumn, Class<?> parent,
+                                  Class<?> entity) {
 
     /**
      * Checks if the parent is equals to the parameter

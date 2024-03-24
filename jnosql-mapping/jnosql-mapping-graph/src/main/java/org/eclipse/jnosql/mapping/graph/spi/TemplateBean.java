@@ -14,12 +14,13 @@
  */
 package org.eclipse.jnosql.mapping.graph.spi;
 
+import jakarta.nosql.Template;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.eclipse.jnosql.mapping.DatabaseQualifier;
 import org.eclipse.jnosql.mapping.DatabaseType;
 import org.eclipse.jnosql.mapping.graph.GraphTemplate;
 import org.eclipse.jnosql.mapping.graph.GraphTemplateProducer;
-import org.eclipse.jnosql.mapping.spi.AbstractBean;
+import org.eclipse.jnosql.mapping.core.spi.AbstractBean;
 
 import jakarta.enterprise.context.spi.CreationalContext;
 import java.lang.annotation.Annotation;
@@ -29,7 +30,7 @@ import java.util.Set;
 
 class TemplateBean extends AbstractBean<GraphTemplate> {
 
-    private static final Set<Type> TYPES = Collections.singleton(GraphTemplate.class);
+    private static final Set<Type> TYPES = Set.of(GraphTemplate.class, Template.class);
 
     private final String provider;
 
@@ -55,8 +56,8 @@ class TemplateBean extends AbstractBean<GraphTemplate> {
     public GraphTemplate create(CreationalContext<GraphTemplate> context) {
 
         GraphTemplateProducer producer = getInstance(GraphTemplateProducer.class);
-        Graph manager = getGraph();
-        return producer.get(manager);
+        Graph graph = getGraph();
+        return producer.apply(graph);
     }
 
     private Graph getGraph() {
@@ -76,7 +77,7 @@ class TemplateBean extends AbstractBean<GraphTemplate> {
 
     @Override
     public String getId() {
-        return GraphTemplate.class.getName() + DatabaseType.COLUMN + "-" + provider;
+        return GraphTemplate.class.getName() + DatabaseType.GRAPH + "-" + provider;
     }
 
 }

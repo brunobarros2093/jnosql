@@ -18,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 import jakarta.nosql.Column;
-import org.eclipse.jnosql.mapping.Embeddable;
-import org.eclipse.jnosql.mapping.test.entities.Actor;
-import org.eclipse.jnosql.mapping.test.entities.Address;
-import org.eclipse.jnosql.mapping.test.entities.Movie;
-import org.eclipse.jnosql.mapping.test.entities.Person;
-import org.eclipse.jnosql.mapping.test.entities.Worker;
-import org.eclipse.jnosql.mapping.test.entities.constructor.BookUser;
-import org.eclipse.jnosql.mapping.test.entities.constructor.PetOwner;
+import jakarta.nosql.Embeddable;
+import org.eclipse.jnosql.mapping.core.entities.Actor;
+import org.eclipse.jnosql.mapping.core.entities.Address;
+import org.eclipse.jnosql.mapping.core.entities.Movie;
+import org.eclipse.jnosql.mapping.core.entities.Person;
+import org.eclipse.jnosql.mapping.core.entities.Worker;
+import org.eclipse.jnosql.mapping.core.entities.constructor.BookUser;
+import org.eclipse.jnosql.mapping.core.entities.constructor.PetOwner;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
@@ -37,44 +37,51 @@ import java.util.Map;
 class MappingTypeTest {
 
     @Test
-    public void shouldReturnList() throws NoSuchFieldException {
+    void shouldReturnList() throws NoSuchFieldException {
         Field field = Person.class.getDeclaredField("phones");
         assertEquals(MappingType.COLLECTION, MappingType.of(field.getType()));
     }
 
     @Test
-    public void shouldReturnSet() throws NoSuchFieldException {
+    void shouldReturnSet() throws NoSuchFieldException {
         Field field = Movie.class.getDeclaredField("actors");
         assertEquals(MappingType.COLLECTION, MappingType.of(field.getType()));
     }
 
     @Test
-    public void shouldReturnMap() throws NoSuchFieldException {
+    void shouldReturnMap() throws NoSuchFieldException {
         Field field = Actor.class.getDeclaredField("movieCharacter");
         assertEquals(MappingType.MAP, MappingType.of(field.getType()));
     }
 
     @Test
-    public void shouldReturnDefault() throws NoSuchFieldException {
+    void shouldReturnDefault() throws NoSuchFieldException {
         Field field = Person.class.getDeclaredField("name");
         assertEquals(MappingType.DEFAULT, MappingType.of(field.getType()));
     }
 
 
     @Test
-    public void shouldReturnEmbedded() throws NoSuchFieldException {
+    void shouldReturnEmbedded() throws NoSuchFieldException {
         Field field = Worker.class.getDeclaredField("job");
         assertEquals(MappingType.EMBEDDED, MappingType.of(field.getType()));
     }
 
     @Test
-    public void shouldReturnEntity() throws NoSuchFieldException {
+    void shouldReturnEmbeddedGroup() throws NoSuchFieldException {
+        Field field = ForClass.class.getDeclaredField("bar2Class");
+        assertEquals(MappingType.EMBEDDED_GROUP, MappingType.of(field.getType()));
+    }
+
+    @Test
+    void shouldReturnEntity() throws NoSuchFieldException {
         Field field = Address.class.getDeclaredField("zipCode");
         assertEquals(MappingType.ENTITY, MappingType.of(field.getType()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldReturnParameterDefault() throws NoSuchMethodException {
+    void shouldReturnParameterDefault()  {
         Constructor<BookUser> constructor = (Constructor<BookUser>) BookUser.class.getDeclaredConstructors()[0];
         Parameter id = constructor.getParameters()[0];
         Parameter name = constructor.getParameters()[1];
@@ -82,32 +89,44 @@ class MappingTypeTest {
         assertEquals(MappingType.DEFAULT, MappingType.of(name.getType()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldReturnParameterCollection() {
+    void shouldReturnParameterCollection() {
         Constructor<BookUser> constructor = (Constructor<BookUser>) BookUser.class.getDeclaredConstructors()[0];
         Parameter books = constructor.getParameters()[2];
         assertEquals(MappingType.COLLECTION, MappingType.of(books.getType()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldReturnParameterEntity() {
+    void shouldReturnParameterEntity() {
         Constructor<PetOwner> constructor = (Constructor<PetOwner>) PetOwner.class.getDeclaredConstructors()[0];
         Parameter animal = constructor.getParameters()[2];
         assertEquals(MappingType.ENTITY, MappingType.of(animal.getType()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldReturnParameterMap() {
+    void shouldReturnParameterMap() {
         Constructor<ForClass> constructor = (Constructor<ForClass>) ForClass.class.getDeclaredConstructors()[0];
         Parameter map = constructor.getParameters()[0];
         assertEquals(MappingType.MAP, MappingType.of(map.getType()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    public void shouldReturnParameterEmbedded() {
+    void shouldReturnParameterEmbeddedFlat() {
         Constructor<ForClass> constructor = (Constructor<ForClass>) ForClass.class.getDeclaredConstructors()[0];
         Parameter map = constructor.getParameters()[1];
         assertEquals(MappingType.EMBEDDED, MappingType.of(map.getType()));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldReturnParameterEmbeddedGroup() {
+        Constructor<ForClass> constructor = (Constructor<ForClass>) ForClass.class.getDeclaredConstructors()[0];
+        Parameter map = constructor.getParameters()[2];
+        assertEquals(MappingType.EMBEDDED_GROUP, MappingType.of(map.getType()));
     }
 
 
@@ -120,14 +139,26 @@ class MappingTypeTest {
         @Column
         private BarClass barClass;
 
-        public ForClass(@Column("map") Map<String, String> map, @Column("barClass") BarClass barClass) {
+        @Column
+        private Bar2Class bar2Class;
+
+        public ForClass(@Column("map") Map<String, String> map, @Column("barClass") BarClass barClass,
+                        @Column("barClass") Bar2Class bar2Class) {
             this.map = map;
             this.barClass = barClass;
+            this.bar2Class = bar2Class;
         }
     }
 
     @Embeddable
     public static class BarClass {
+
+        @Column("integerAnnotation")
+        private Integer integer;
+    }
+
+    @Embeddable(Embeddable.EmbeddableType.GROUPING)
+    public static class Bar2Class {
 
         @Column("integerAnnotation")
         private Integer integer;

@@ -17,17 +17,18 @@ package org.eclipse.jnosql.mapping.keyvalue;
 import jakarta.data.exceptions.NonUniqueResultException;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.nosql.PreparedStatement;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.PreparedStatement;
+import org.eclipse.jnosql.mapping.keyvalue.KeyValueTemplate;
 import org.eclipse.jnosql.communication.Value;
 import org.eclipse.jnosql.communication.keyvalue.BucketManager;
 import org.eclipse.jnosql.communication.keyvalue.KeyValueEntity;
 import org.eclipse.jnosql.communication.keyvalue.KeyValuePreparedStatement;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.keyvalue.spi.KeyValueExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
-import org.eclipse.jnosql.mapping.test.entities.Person;
-import org.eclipse.jnosql.mapping.test.entities.User;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.keyvalue.entities.Person;
+import org.eclipse.jnosql.mapping.keyvalue.entities.User;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -57,10 +58,11 @@ import static org.mockito.Mockito.when;
 @EnableAutoWeld
 @AddPackages(value = {Converters.class, KeyValueEntityConverter.class})
 @AddPackages(MockProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, KeyValueExtension.class})
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class DefaultKeyValueTemplateTest {
+class DefaultKeyValueTemplateTest {
 
     private static final String KEY = "otaviojava";
     @Inject
@@ -79,14 +81,14 @@ public class DefaultKeyValueTemplateTest {
 
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         Instance<BucketManager> instance = Mockito.mock(Instance.class);
         when(instance.get()).thenReturn(manager);
         this.template = new DefaultKeyValueTemplate(converter, instance, eventManager);
     }
 
     @Test
-    public void shouldPut() {
+    void shouldPut() {
         User user = new User(KEY, "otavio", 27);
         template.put(user);
         Mockito.verify(manager).put(captor.capture());
@@ -97,14 +99,14 @@ public class DefaultKeyValueTemplateTest {
 
 
     @Test
-    public void shouldMergeOnPut() {
+    void shouldMergeOnPut() {
         User user = new User(KEY, "otavio", 27);
         User result = template.put(user);
         assertSame(user, result);
     }
 
     @Test
-    public void shouldPutIterable() {
+    void shouldPutIterable() {
         User user = new User(KEY, "otavio", 27);
         template.put(singletonList(user));
         Mockito.verify(manager).put(captor.capture());
@@ -114,7 +116,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldPutTTL() {
+    void shouldPutTTL() {
 
         Duration duration = Duration.ofSeconds(2L);
         User user = new User(KEY, "otavio", 27);
@@ -127,7 +129,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldPutTTLIterable() {
+    void shouldPutTTLIterable() {
 
         Duration duration = Duration.ofSeconds(2L);
         User user = new User(KEY, "otavio", 27);
@@ -140,7 +142,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldInsert() {
+    void shouldInsert() {
         User user = new User(KEY, "otavio", 27);
         template.insert(user);
         Mockito.verify(manager).put(captor.capture());
@@ -150,7 +152,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldInsertIterable() {
+    void shouldInsertIterable() {
         User user = new User(KEY, "otavio", 27);
         template.insert(singletonList(user));
         Mockito.verify(manager).put(captor.capture());
@@ -160,7 +162,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldInsertTTL() {
+    void shouldInsertTTL() {
 
         Duration duration = Duration.ofSeconds(2L);
         User user = new User(KEY, "otavio", 27);
@@ -173,7 +175,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldInsertTTLIterable() {
+    void shouldInsertTTLIterable() {
 
         Duration duration = Duration.ofSeconds(2L);
         User user = new User(KEY, "otavio", 27);
@@ -186,7 +188,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldUpdate() {
+    void shouldUpdate() {
         User user = new User(KEY, "otavio", 27);
         template.update(user);
         Mockito.verify(manager).put(captor.capture());
@@ -196,7 +198,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldUpdateIterable() {
+    void shouldUpdateIterable() {
         User user = new User(KEY, "otavio", 27);
         template.update(singletonList(user));
         Mockito.verify(manager).put(captor.capture());
@@ -206,7 +208,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldGet() {
+    void shouldGet() {
         User user = new User(KEY, "otavio", 27);
 
         when(manager.get(KEY)).thenReturn(Optional.of(Value.of(user)));
@@ -217,7 +219,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldFindById() {
+    void shouldFindById() {
         User user = new User(KEY, "otavio", 27);
         when(manager.get(KEY)).thenReturn(Optional.of(Value.of(user)));
         Optional<User> userOptional = template.find(User.class, KEY);
@@ -227,7 +229,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldGetIterable() {
+    void shouldGetIterable() {
         User user = new User(KEY, "otavio", 27);
 
         when(manager.get(KEY)).thenReturn(Optional.of(Value.of(user)));
@@ -239,7 +241,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldReturnEmptyIterable() {
+    void shouldReturnEmptyIterable() {
         User user = new User(KEY, "otavio", 27);
 
         when(manager.get(KEY)).thenReturn(Optional.empty());
@@ -250,44 +252,45 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldRemove() {
+    void shouldRemove() {
         template.delete(KEY);
         Mockito.verify(manager).delete(KEY);
     }
 
+
     @Test
-    public void shouldRemoveById() {
+    void shouldRemoveById() {
         template.delete(User.class, KEY);
         Mockito.verify(manager).delete(KEY);
     }
 
     @Test
-    public void shouldRemoveIterable() {
+    void shouldRemoveIterable() {
         template.delete(singletonList(KEY));
         Mockito.verify(manager).delete(singletonList(KEY));
     }
 
     @Test
-    public void shouldExecuteClass() {
+    void shouldExecuteClass() {
         template.query("remove id");
         Mockito.verify(manager).query("remove id");
     }
 
     @Test
     @MockitoSettings(strictness = Strictness.LENIENT)
-    public void shouldReturnErrorWhenQueryIsNull() {
+    void shouldReturnErrorWhenQueryIsNull() {
         assertThrows(NullPointerException.class, () -> template.query(null));
         assertThrows(NullPointerException.class, () -> template.query(null, String.class));
     }
 
     @Test
-    public void shouldExecuteClassNotClass() {
+    void shouldExecuteClassNotClass() {
         template.query("remove id");
         Mockito.verify(manager).query("remove id");
     }
 
     @Test
-    public void shouldExecuteQuery() {
+    void shouldExecuteQuery() {
         when(manager.query("get id"))
                 .thenReturn(Stream.of(Value.of("12")));
 
@@ -296,7 +299,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldReturnSingleResult() {
+    void shouldReturnSingleResult() {
         when(manager.query("get id"))
                 .thenReturn(Stream.of(Value.of("12")));
 
@@ -305,7 +308,7 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldReturnSingleResult2() {
+    void shouldReturnSingleResult2() {
 
         when(manager.query("get id2"))
                 .thenReturn(Stream.empty());
@@ -314,14 +317,14 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldReturnSingleResult3() {
+    void shouldReturnSingleResult3() {
         when(manager.query("get id3"))
                 .thenReturn(Stream.of(Value.of("12"), Value.of("15")));
         assertThrows(NonUniqueResultException.class, () -> template.getSingleResult("get id3", Integer.class));
     }
 
     @Test
-    public void shouldExecutePrepare() {
+    void shouldExecutePrepare() {
         org.eclipse.jnosql.communication.keyvalue.KeyValuePreparedStatement prepare = Mockito.mock(KeyValuePreparedStatement.class);
         when(prepare.result()).thenReturn(Stream.of(Value.of("12")));
         when(prepare.singleResult()).thenReturn(Optional.of(Value.of("12")));
@@ -337,12 +340,12 @@ public class DefaultKeyValueTemplateTest {
     }
 
     @Test
-    public void shouldUnsupportedExceptionOnSelect() {
+    void shouldUnsupportedExceptionOnSelect() {
         assertThrows(UnsupportedOperationException.class, ()-> template.select(Person.class));
     }
 
     @Test
-    public void shouldUnsupportedExceptionOnDelete() {
+    void shouldUnsupportedExceptionOnDelete() {
         assertThrows(UnsupportedOperationException.class, ()-> template.delete(Person.class));
     }
 }

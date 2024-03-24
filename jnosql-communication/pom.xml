@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.eclipse.jnosql</groupId>
         <artifactId>jnosql-parent</artifactId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.1.1-SNAPSHOT</version>
     </parent>
 
     <groupId>org.eclipse.jnosql.communication</groupId>
@@ -34,7 +34,6 @@
         <module>jnosql-communication-core</module>
         <module>jnosql-communication-query</module>
         <module>jnosql-communication-key-value</module>
-        <module>jnosql-communication-column</module>
-        <module>jnosql-communication-document</module>
+        <module>jnosql-communication-semistructured</module>
     </modules>
 </project>

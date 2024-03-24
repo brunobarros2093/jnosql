@@ -20,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class MethodParamQueryValueTest {
 
     @Test
-    public void shouldReturnType() {
+    void shouldReturnType() {
         MethodParamQueryValue param = new MethodParamQueryValue("name");
         Assertions.assertThat(param).isNotNull()
                 .extracting(MethodParamQueryValue::type)
                 .isNotNull().isEqualTo(ValueType.PARAMETER);
     }
     @Test
-    public void shouldCreateInstance() {
+    void shouldCreateInstance() {
         MethodParamQueryValue param = new MethodParamQueryValue("name");
         Assertions.assertThat(param).isNotNull()
                 .extracting(MethodParamQueryValue::get)
@@ -36,14 +36,53 @@ class MethodParamQueryValueTest {
     }
 
     @Test
-    public void shouldEquals() {
+    void shouldEquals() {
         MethodParamQueryValue param = new MethodParamQueryValue("name");
         assertEquals(param, param);
     }
 
     @Test
-    public void shouldHashCode() {
+    void shouldHashCode() {
         MethodParamQueryValue param = new MethodParamQueryValue("name");
         assertEquals(param.hashCode(), param.hashCode());
+    }
+
+    @Test
+    void shouldEquality() {
+        String value = "testValue";
+        MethodParamQueryValue queryValue1 = new MethodParamQueryValue(value);
+        assertEquals(queryValue1, queryValue1);
+    }
+
+    @Test
+    void shouldInequality() {
+        MethodParamQueryValue queryValue1 = new MethodParamQueryValue("value1");
+        MethodParamQueryValue queryValue2 = new MethodParamQueryValue("value2");
+
+        // Should have inequality
+        assertNotEquals(queryValue1, queryValue2);
+    }
+
+    @Test
+    void shouldConsistentHashcode() {
+        String value = "testValue";
+        MethodParamQueryValue queryValue1 = new MethodParamQueryValue(value);
+        Assertions.assertThat(queryValue1.hashCode()).isEqualTo(queryValue1.hashCode());
+    }
+
+    @Test
+    void shouldToStringRepresentation() {
+        String value = "testValue";
+        MethodParamQueryValue queryValue = new MethodParamQueryValue(value);
+
+        Assertions.assertThat(queryValue.toString()).startsWith("@" + value);
+    }
+
+    @Test
+    void shouldValueWithPrefix() {
+        MethodParamQueryValue queryValue = new MethodParamQueryValue("test");
+
+        // Should generate a value with the original prefix and nano time
+        assertTrue(queryValue.get().startsWith("test_"));
     }
 }

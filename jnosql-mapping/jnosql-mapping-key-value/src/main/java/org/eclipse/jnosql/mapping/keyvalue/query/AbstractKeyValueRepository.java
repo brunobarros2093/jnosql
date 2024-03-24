@@ -15,93 +15,19 @@
 package org.eclipse.jnosql.mapping.keyvalue.query;
 
 
-import jakarta.data.repository.Page;
-import jakarta.data.repository.Pageable;
-import jakarta.data.repository.PageableRepository;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import org.eclipse.jnosql.mapping.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.core.query.AbstractRepository;
 
 /**
  * The template method to key-value repository
  */
-public abstract class AbstractKeyValueRepository<T> implements PageableRepository {
+public abstract class AbstractKeyValueRepository<T, K> extends AbstractRepository<T, K> {
 
-
-    private final Class<T> type;
-
-
-    protected abstract KeyValueTemplate getTemplate();
-
-    public AbstractKeyValueRepository(Class<T> type) {
-        this.type = type;
-    }
-
+    protected abstract KeyValueTemplate template();
 
     @Override
-    public Object save(Object entity) {
-        return getTemplate().put(entity);
+    protected String getErrorMessage() {
+        return "The key-value type does not support %s method";
     }
 
-    @Override
-    public Iterable saveAll(Iterable entities) {
-        return getTemplate().put(entities);
-    }
-
-    @Override
-    public void deleteById(Object key) {
-        getTemplate().delete(key);
-    }
-
-    @Override
-    public void deleteAllById(Iterable ids) {
-        getTemplate().delete(ids);
-    }
-
-    @Override
-    public Optional findById(Object key) {
-        return getTemplate().get(key, type);
-    }
-
-    @Override
-    public Stream findAllById(Iterable keys) {
-        return StreamSupport.stream(getTemplate().get(keys, type).spliterator(), false);
-    }
-
-    @Override
-    public boolean existsById(Object key) {
-        return getTemplate().get(key, type).isPresent();
-    }
-
-    @Override
-    public long count() {
-        throw new UnsupportedOperationException("The key-value type does not support count method");
-    }
-
-    @Override
-    public Page findAll(Pageable pageable) {
-        throw new UnsupportedOperationException("The key-value type does not support count method");
-    }
-
-    @Override
-    public Stream findAll() {
-        throw new UnsupportedOperationException("The key-value type does not support count method");
-    }
-
-    @Override
-    public void deleteAll() {
-        throw new UnsupportedOperationException("The key-value type does not support count method");
-    }
-
-    @Override
-    public void delete(Object entity) {
-        throw new UnsupportedOperationException("The key-value type does not support count method");
-    }
-
-    @Override
-    public void deleteAll(Iterable entities) {
-        throw new UnsupportedOperationException("The key-value type does not support count method");
-    }
 }

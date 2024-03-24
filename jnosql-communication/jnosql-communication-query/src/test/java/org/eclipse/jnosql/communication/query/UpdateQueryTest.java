@@ -26,43 +26,55 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-public class UpdateQueryTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class UpdateQueryTest {
 
     @ParameterizedTest
     @ArgumentsSource(UpdateQueryArgumentProvider.class)
-    public void shouldExecuteQuery(String query) {
+    void shouldExecuteQuery(String query) {
         testQuery(query);
     }
 
     @Test
-    public void shouldIgnoreComments() {
+    void shouldIgnoreComments() {
         testQuery("//ignore this line \n update Person (name = \"Ada Lovelace\")");
     }
 
     @ParameterizedTest
     @ArgumentsSource(WrongUpdateQueryArgumentProvider.class)
-    public void shouldNotExecute(String query) {
+    void shouldNotExecute(String query) {
         Assertions.assertThrows(QueryException.class, () -> testQuery(query));
     }
 
     @Test
-    public void shouldCreateFromMethodFactory() {
+    void shouldCreateFromMethodFactory() {
         UpdateQuery query = UpdateQuery.parse("update Person (name = \"Ada Lovelace\")");
         Assertions.assertNotNull(query);
     }
 
     @Test
-    public void shouldEquals() {
+    void shouldEquals() {
         String text = "update Person (name = \"Ada Lovelace\")";
         UpdateQuery query = UpdateQuery.parse(text);
         Assertions.assertEquals(query, UpdateQuery.parse(text));
+        Assertions.assertEquals(query, query);
+        Assertions.assertNotEquals(query, text);
     }
 
     @Test
-    public void shouldHashCode() {
+    void shouldHashCode() {
         String text = "update Person (name = \"Ada Lovelace\")";
         UpdateQuery query = UpdateQuery.parse(text);
         Assertions.assertEquals(query.hashCode(), UpdateQuery.parse(text).hashCode());
+    }
+
+    @Test
+    void shouldToString(){
+        String text = "update Person (name = \"Ada Lovelace\")";
+        UpdateQuery query = UpdateQuery.parse(text);
+        assertThat(query.toString())
+                .isEqualTo("update Person ([name EQUALS 'Ada Lovelace']) ");
     }
 
     private void testQuery(String query) {

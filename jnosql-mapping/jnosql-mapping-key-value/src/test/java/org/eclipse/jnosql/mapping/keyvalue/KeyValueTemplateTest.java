@@ -16,10 +16,11 @@ package org.eclipse.jnosql.mapping.keyvalue;
 
 import jakarta.inject.Inject;
 import jakarta.nosql.Template;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.Database;
 import org.eclipse.jnosql.mapping.keyvalue.spi.KeyValueExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -31,6 +32,7 @@ import static org.eclipse.jnosql.mapping.DatabaseType.KEY_VALUE;
 @EnableAutoWeld
 @AddPackages(value = {Converters.class, KeyValueEntityConverter.class})
 @AddPackages(MockProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, KeyValueExtension.class})
 class KeyValueTemplateTest {
 
@@ -42,12 +44,12 @@ class KeyValueTemplateTest {
     private Template qualifier;
 
     @Test
-    public void shouldInjectTemplate() {
+    void shouldInjectTemplate() {
         Assertions.assertNotNull(template);
     }
 
     @Test
-    public void shouldInjectQualifier() {
+    void shouldInjectQualifier() {
         Assertions.assertNotNull(qualifier);
     }
 

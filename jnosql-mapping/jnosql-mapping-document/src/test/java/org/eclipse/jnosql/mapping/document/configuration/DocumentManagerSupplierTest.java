@@ -16,26 +16,30 @@ package org.eclipse.jnosql.mapping.document.configuration;
 
 import jakarta.data.exceptions.MappingException;
 import jakarta.inject.Inject;
-import org.eclipse.jnosql.communication.document.DocumentManager;
-import org.eclipse.jnosql.mapping.Converters;
-import org.eclipse.jnosql.mapping.document.DocumentEntityConverter;
+import org.eclipse.jnosql.communication.semistructured.DatabaseManager;
+import org.eclipse.jnosql.mapping.core.Converters;
+import org.eclipse.jnosql.mapping.document.DocumentTemplate;
 import org.eclipse.jnosql.mapping.document.MockProducer;
 import org.eclipse.jnosql.mapping.document.spi.DocumentExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.eclipse.jnosql.mapping.config.MappingConfigurations.DOCUMENT_DATABASE;
-import static org.eclipse.jnosql.mapping.config.MappingConfigurations.DOCUMENT_PROVIDER;
+import static org.eclipse.jnosql.mapping.core.config.MappingConfigurations.DOCUMENT_DATABASE;
+import static org.eclipse.jnosql.mapping.core.config.MappingConfigurations.DOCUMENT_PROVIDER;
 
 @EnableAutoWeld
-@AddPackages(value = {Converters.class, DocumentEntityConverter.class})
+@AddPackages(value = {Converters.class, EntityConverter.class})
 @AddPackages(MockProducer.class)
+@AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class, DocumentExtension.class})
 class DocumentManagerSupplierTest {
 
@@ -43,40 +47,47 @@ class DocumentManagerSupplierTest {
     private DocumentManagerSupplier supplier;
 
     @BeforeEach
-    public void beforeEach(){
+    void beforeEach(){
         System.clearProperty(DOCUMENT_PROVIDER.get());
         System.clearProperty(DOCUMENT_DATABASE.get());
     }
 
     @Test
-    public void shouldGetManager() {
+    void shouldGetManager() {
         System.setProperty(DOCUMENT_PROVIDER.get(), DocumentConfigurationMock.class.getName());
         System.setProperty(DOCUMENT_DATABASE.get(), "database");
-        DocumentManager manager = supplier.get();
+        DatabaseManager manager = supplier.get();
         Assertions.assertNotNull(manager);
         assertThat(manager).isInstanceOf(DocumentConfigurationMock.DocumentManagerMock.class);
     }
 
 
     @Test
-    public void shouldUseDefaultConfigurationWhenProviderIsWrong() {
+    void shouldUseDefaultConfigurationWhenProviderIsWrong() {
         System.setProperty(DOCUMENT_PROVIDER.get(), Integer.class.getName());
         System.setProperty(DOCUMENT_DATABASE.get(), "database");
-        DocumentManager manager = supplier.get();
+        DatabaseManager manager = supplier.get();
         Assertions.assertNotNull(manager);
         assertThat(manager).isInstanceOf(DocumentConfigurationMock2.DocumentManagerMock.class);
     }
 
     @Test
-    public void shouldUseDefaultConfiguration() {
+    void shouldUseDefaultConfiguration() {
         System.setProperty(DOCUMENT_DATABASE.get(), "database");
-        DocumentManager manager = supplier.get();
+        DatabaseManager manager = supplier.get();
         Assertions.assertNotNull(manager);
         assertThat(manager).isInstanceOf(DocumentConfigurationMock2.DocumentManagerMock.class);
     }
 
     @Test
-    public void shouldReturnErrorWhenThereIsNotDatabase() {
+    void shouldReturnErrorWhenThereIsNotDatabase() {
         Assertions.assertThrows(MappingException.class, () -> supplier.get());
+    }
+
+    @Test
+    void shouldClose(){
+        DatabaseManager manager = Mockito.mock(DatabaseManager.class);
+        supplier.close(manager);
+        Mockito.verify(manager).close();
     }
 }

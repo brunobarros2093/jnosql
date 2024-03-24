@@ -33,6 +33,18 @@ public interface EntityMetadata {
     String name();
 
     /**
+     * Returns the {@link Class#getSimpleName()} of the entity
+     * @return the {@link Class#getSimpleName()} of the entity
+     */
+    String simpleName();
+
+    /**
+     * Returns the {@link Class#getName()}} of the entity
+     * @return the {@link Class#getName()} of the entity
+     */
+    String className();
+
+    /**
      * @return the fields name
      */
     List<String> fieldsName();
@@ -45,22 +57,22 @@ public interface EntityMetadata {
 
     /**
      * Return the parent class of this class mapping.
-     * It will check the parent class has the {@link org.eclipse.jnosql.mapping.Inheritance} annotation.
+     * It will check the parent class has the {@link jakarta.nosql.Inheritance} annotation.
      *
      * @return the parent annotation otherwise {@link  Optional#empty()}
      */
     Optional<InheritanceMetadata> inheritance();
 
     /**
-     * A class that has a parent with {@link org.eclipse.jnosql.mapping.Inheritance} annotation
+     * A class that has a parent with {@link jakarta.nosql.Inheritance} annotation
      * won't use the name. It will use the parent name instead.
      *
-     * @return true if has not parent class with {@link org.eclipse.jnosql.mapping.Inheritance} or is the parent itself
+     * @return true if it has not parent class with {@link jakarta.nosql.Inheritance} or is the parent itself
      */
     boolean hasEntityName();
 
     /**
-     * @return true if the entity class has the {@link org.eclipse.jnosql.mapping.Inheritance} annotation
+     * @return true if the entity class has the {@link jakarta.nosql.Inheritance} annotation
      */
     boolean isInheritance();
 

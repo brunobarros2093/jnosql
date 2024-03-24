@@ -1,0 +1,109 @@
+/*
+ *  Copyright (c) 2022 Contributors to the Eclipse Foundation
+ *   All rights reserved. This program and the accompanying materials
+ *   are made available under the terms of the Eclipse Public License v1.0
+ *   and Apache License v2.0 which accompanies this distribution.
+ *   The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ *   and the Apache License v2.0 is available at http://www.opensource.org/licenses/apache2.0.php.
+ *
+ *   You may elect to redistribute this code under either of these licenses.
+ *
+ *   Contributors:
+ *
+ *   Otavio Santana
+ */
+package org.eclipse.jnosql.mapping.reflection;
+
+import org.eclipse.jnosql.communication.TypeSupplier;
+import jakarta.nosql.AttributeConverter;
+import org.eclipse.jnosql.mapping.metadata.GenericFieldMetadata;
+import org.eclipse.jnosql.mapping.metadata.MappingType;
+
+import java.lang.reflect.Field;
+
+class FieldMappingBuilder {
+
+    private MappingType type;
+
+    private Field field;
+
+    private String name;
+
+    private String entityName;
+
+    private TypeSupplier<?> typeSupplier;
+
+    private Class<? extends AttributeConverter<?, ?>> converter;
+
+    private boolean id;
+
+    private FieldReader reader;
+
+    private FieldWriter writer;
+
+    private String udt;
+
+
+    public FieldMappingBuilder type(MappingType type) {
+        this.type = type;
+        return this;
+    }
+
+    public FieldMappingBuilder field(Field field) {
+        this.field = field;
+        return this;
+    }
+
+    public FieldMappingBuilder name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public FieldMappingBuilder typeSupplier(TypeSupplier<?> typeSupplier) {
+        this.typeSupplier = typeSupplier;
+        return this;
+    }
+
+    public FieldMappingBuilder entityName(String entityName) {
+        this.entityName = entityName;
+        return this;
+    }
+
+    public FieldMappingBuilder converter(Class<? extends AttributeConverter<?, ?>> converter) {
+        this.converter = converter;
+        return this;
+    }
+
+    public FieldMappingBuilder id(boolean id) {
+        this.id = id;
+        return this;
+    }
+
+    public FieldMappingBuilder writer(FieldWriter writer) {
+        this.writer = writer;
+        return this;
+    }
+
+    public FieldMappingBuilder udt(String udt) {
+        this.udt = udt;
+        return this;
+    }
+
+    public FieldMappingBuilder reader(FieldReader reader) {
+        this.reader = reader;
+        return this;
+    }
+
+    public DefaultFieldMetadata buildDefault() {
+        return new DefaultFieldMetadata(type, field, name, converter, id, reader, writer, udt);
+    }
+
+    public GenericFieldMetadata buildGeneric() {
+        return new DefaultGenericFieldMetadata(type, field, name, typeSupplier, converter, reader, writer, udt);
+    }
+
+    public EmbeddedFieldMetadata buildEmbedded() {
+        return new EmbeddedFieldMetadata(type, field, name, entityName, reader, writer, udt);
+    }
+
+}

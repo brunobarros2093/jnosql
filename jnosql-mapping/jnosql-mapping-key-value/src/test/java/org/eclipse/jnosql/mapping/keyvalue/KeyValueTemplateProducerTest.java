@@ -15,11 +15,12 @@
 package org.eclipse.jnosql.mapping.keyvalue;
 
 import jakarta.inject.Inject;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.keyvalue.KeyValueTemplate;
 import org.eclipse.jnosql.communication.keyvalue.BucketManager;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.keyvalue.spi.KeyValueExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -33,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @AddPackages(value = {Converters.class, KeyValueEntityConverter.class})
 @AddPackages(MockProducer.class)
 @AddExtensions({EntityMetadataExtension.class, KeyValueExtension.class})
-public class KeyValueTemplateProducerTest {
+@AddPackages(Reflections.class)
+class KeyValueTemplateProducerTest {
 
 
     @Inject
@@ -41,12 +43,12 @@ public class KeyValueTemplateProducerTest {
 
 
     @Test
-    public void shouldReturnErrorWhenManagerNull() {
+    void shouldReturnErrorWhenManagerNull() {
         assertThrows(NullPointerException.class, () -> producer.apply(null));
     }
 
     @Test
-    public void shouldReturn() {
+    void shouldReturn() {
         BucketManager manager = Mockito.mock(BucketManager.class);
         KeyValueTemplate repository = producer.apply(manager);
         assertNotNull(repository);

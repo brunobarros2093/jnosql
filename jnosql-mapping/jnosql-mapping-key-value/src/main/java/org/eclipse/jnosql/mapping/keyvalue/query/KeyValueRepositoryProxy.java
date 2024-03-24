@@ -15,39 +15,56 @@
 package org.eclipse.jnosql.mapping.keyvalue.query;
 
 
-
-import jakarta.data.repository.PageableRepository;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.core.query.AbstractRepository;
+import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
+import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
 
 import java.lang.reflect.ParameterizedType;
 
-class KeyValueRepositoryProxy<T> extends AbstractKeyValueRepositoryProxy<T> {
+class KeyValueRepositoryProxy<T, K> extends AbstractKeyValueRepositoryProxy<T, K> {
 
-    private final DefaultKeyValueRepository repository;
+    private final DefaultKeyValueRepository<T, K>  repository;
     private final KeyValueTemplate template;
     private final Class<T> type;
 
-    KeyValueRepositoryProxy(Class<?> repositoryType, KeyValueTemplate template) {
+    private final Class<?> repositoryType;
+
+    private final EntityMetadata metadata;
+
+    KeyValueRepositoryProxy(Class<?> repositoryType, EntitiesMetadata entitiesMetadata, KeyValueTemplate template) {
         Class<T> typeClass = (Class) ((ParameterizedType) repositoryType.getGenericInterfaces()[0])
                 .getActualTypeArguments()[0];
-        this.repository = new DefaultKeyValueRepository(typeClass, template);
+        this.metadata = entitiesMetadata.get(typeClass);
+        this.repository = new DefaultKeyValueRepository<>(metadata, template);
         this.template = template;
         this.type = typeClass;
+        this.repositoryType = repositoryType;
     }
 
     @Override
-    protected PageableRepository getRepository() {
+    protected AbstractRepository<T, K> repository() {
         return repository;
     }
 
     @Override
-    protected KeyValueTemplate getTemplate() {
+    protected KeyValueTemplate template() {
         return template;
     }
 
     @Override
-    protected Class getType() {
+    protected Class<T> type() {
         return type;
+    }
+
+    @Override
+    protected Class<?> repositoryType() {
+        return repositoryType;
+    }
+
+    @Override
+    protected EntityMetadata entityMetadata() {
+        return metadata;
     }
 
 

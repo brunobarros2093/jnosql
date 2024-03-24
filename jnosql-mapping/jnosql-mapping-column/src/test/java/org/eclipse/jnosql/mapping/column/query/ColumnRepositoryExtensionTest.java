@@ -15,15 +15,18 @@
 package org.eclipse.jnosql.mapping.column.query;
 
 import jakarta.inject.Inject;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.column.ColumnTemplate;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.Database;
 import org.eclipse.jnosql.mapping.DatabaseType;
-import org.eclipse.jnosql.mapping.column.ColumnEntityConverter;
 import org.eclipse.jnosql.mapping.column.MockProducer;
 import org.eclipse.jnosql.mapping.column.entities.Person;
 import org.eclipse.jnosql.mapping.column.entities.PersonRepository;
 import org.eclipse.jnosql.mapping.column.spi.ColumnExtension;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
+import org.eclipse.jnosql.mapping.semistructured.query.SemistructuredRepositoryProxy;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -33,10 +36,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @EnableAutoWeld
-@AddPackages(value = {Converters.class, ColumnEntityConverter.class})
-@AddPackages(MockProducer.class)
+@AddPackages(value = {Converters.class, EntityConverter.class, SemistructuredRepositoryProxy.class})
+@AddPackages({MockProducer.class, ColumnTemplate.class, Reflections.class})
 @AddExtensions({EntityMetadataExtension.class, ColumnExtension.class})
-public class ColumnRepositoryExtensionTest {
+class ColumnRepositoryExtensionTest {
 
     @Inject
     @Database(value = DatabaseType.COLUMN)
@@ -47,14 +50,14 @@ public class ColumnRepositoryExtensionTest {
     private PersonRepository repositoryMock;
 
     @Test
-    public void shouldInitiate() {
+    void shouldInitiate() {
         assertNotNull(repository);
         Person person = repository.save(Person.builder().build());
         assertEquals("Default", person.getName());
     }
 
     @Test
-    public void shouldUseInstantiation(){
+    void shouldUseInstantiation(){
         assertNotNull(repositoryMock);
         Person person = repositoryMock.save(Person.builder().build());
         assertEquals("columnRepositoryMock", person.getName());

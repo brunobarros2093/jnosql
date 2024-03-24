@@ -14,10 +14,10 @@
  */
 package org.eclipse.jnosql.mapping.keyvalue;
 
-import org.eclipse.jnosql.mapping.AttributeConverter;
+import jakarta.nosql.AttributeConverter;
 import org.eclipse.jnosql.communication.Value;
 import org.eclipse.jnosql.communication.keyvalue.KeyValueEntity;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.IdNotFoundException;
 import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
 import org.eclipse.jnosql.mapping.metadata.EntitiesMetadata;
@@ -80,7 +80,7 @@ public abstract class KeyValueEntityConverter {
     private <T> Object getKey(Object key, Class<T> type, boolean toEntity) {
         FieldMetadata id = getId(type);
         if (id.converter().isPresent()) {
-            AttributeConverter attributeConverter = getConverters().get(id.converter().get());
+            AttributeConverter<Object, Object> attributeConverter = getConverters().get(id);
             if (toEntity) {
                 return attributeConverter.convertToEntityAttribute(key);
             } else {

@@ -15,11 +15,12 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class StringQueryValueTest {
 
     @Test
-    public void shouldReturnType() {
+    void shouldReturnType() {
         StringQueryValue string = new StringQueryValue("text");
         Assertions.assertThat(string).isNotNull()
                 .extracting(StringQueryValue::type)
@@ -28,7 +29,7 @@ class StringQueryValueTest {
 
 
     @Test
-    public void shouldReturnValue() {
+    void shouldReturnValue() {
         StringQueryValue string = new StringQueryValue("text");
         Assertions.assertThat(string).isNotNull()
                 .extracting(StringQueryValue::get)
@@ -36,14 +37,23 @@ class StringQueryValueTest {
     }
 
     @Test
-    public void shouldEquals() {
+    void shouldEquals() {
+        StringQueryValue queryValue = new StringQueryValue("text");
+        assertEquals(queryValue, queryValue);
         assertEquals(new StringQueryValue("text"), new StringQueryValue("text"));
+        assertNotEquals(new StringQueryValue("text"), new StringQueryValue("text2"));
+        assertNotEquals(new StringQueryValue("text"), "text2");
     }
 
     @Test
-    public void shouldHasCode() {
+    void shouldHasCode() {
         assertEquals(new StringQueryValue("text").hashCode()
                 , new StringQueryValue("text").hashCode());
 
+    }
+
+    @Test
+    void shouldReturnToString() {
+        assertEquals("'text'", new StringQueryValue("text").toString());
     }
 }

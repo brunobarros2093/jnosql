@@ -17,13 +17,7 @@ import org.eclipse.jnosql.communication.query.QueryValue;
 
 import java.util.Arrays;
 
-final class MethodArrayValue implements ArrayQueryValue {
-
-    private final QueryValue<?>[] values;
-
-    private MethodArrayValue(QueryValue<?>[] values) {
-        this.values = values;
-    }
+record MethodArrayValue(QueryValue<?>[] values) implements ArrayQueryValue {
 
     @Override
     public QueryValue<?>[] get() {
@@ -35,10 +29,9 @@ final class MethodArrayValue implements ArrayQueryValue {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof MethodArrayValue)) {
+        if (!(o instanceof MethodArrayValue that)) {
             return false;
         }
-        MethodArrayValue that = (MethodArrayValue) o;
         return Arrays.equals(values, that.values);
     }
 

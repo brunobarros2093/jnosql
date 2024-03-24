@@ -15,15 +15,16 @@
 package org.eclipse.jnosql.mapping.keyvalue.spi;
 
 import jakarta.inject.Inject;
-import jakarta.nosql.keyvalue.KeyValueTemplate;
-import org.eclipse.jnosql.mapping.Converters;
+import org.eclipse.jnosql.mapping.keyvalue.KeyValueTemplate;
+import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.Database;
 import org.eclipse.jnosql.mapping.DatabaseType;
 import org.eclipse.jnosql.mapping.keyvalue.KeyValueEntityConverter;
 import org.eclipse.jnosql.mapping.keyvalue.MockProducer;
-import org.eclipse.jnosql.mapping.reflection.EntityMetadataExtension;
-import org.eclipse.jnosql.mapping.test.entities.Person;
-import org.eclipse.jnosql.mapping.test.entities.User;
+import org.eclipse.jnosql.mapping.reflection.Reflections;
+import org.eclipse.jnosql.mapping.core.spi.EntityMetadataExtension;
+import org.eclipse.jnosql.mapping.keyvalue.entities.Person;
+import org.eclipse.jnosql.mapping.keyvalue.entities.User;
 import org.jboss.weld.junit5.auto.AddExtensions;
 import org.jboss.weld.junit5.auto.AddPackages;
 import org.jboss.weld.junit5.auto.EnableAutoWeld;
@@ -35,7 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @AddPackages(value = {Converters.class, KeyValueEntityConverter.class})
 @AddPackages(MockProducer.class)
 @AddExtensions({EntityMetadataExtension.class, KeyValueExtension.class})
-public class KeyValueExtensionTest {
+@AddPackages(Reflections.class)
+class KeyValueExtensionTest {
 
     @Inject
     private KeyValueTemplate template;
@@ -56,7 +58,7 @@ public class KeyValueExtensionTest {
     private UserRepository userRepositoryMock;
 
     @Test
-    public void shouldUseMock() {
+    void shouldUseMock() {
         Person person = template.get(10L, Person.class).get();
 
         Person personMock = templateMock.get(10L, Person.class).get();
@@ -68,7 +70,7 @@ public class KeyValueExtensionTest {
 
 
     @Test
-    public void shouldUseRepository() {
+    void shouldUseRepository() {
         User user = userRepository.findById("user").get();
         User userDefault = userRepositoryDefault.findById("user").get();
         User userMock = userRepositoryMock.findById("user").get();

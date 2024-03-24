@@ -18,6 +18,8 @@
  */
 package org.eclipse.jnosql.communication;
 
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +34,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
@@ -41,9 +42,9 @@ class DefaultValueTest {
     private static final Value VALUE_OF_DOUBLE = Value.of(10L);
 
     @Test
-    @DisplayName("Should return NullPointerException when element is null")
-    void shouldReturnErrorWhenElementIsNull() {
-        assertThatNullPointerException().isThrownBy(() -> Value.of(null)).withMessage("value is required");
+    @DisplayName("Should return Null element when element is null")
+    void shouldReturnNullElementWhenElementIsNull() {
+        assertThat(Value.of(null)).isEqualTo(DefaultValue.NULL);
     }
 
     @Test
@@ -163,5 +164,43 @@ class DefaultValueTest {
             });
         }).isInstanceOf(UnsupportedOperationException.class)
                 .hasMessage("The type TypeReference{type=java.util.Map<java.lang.String, java.util.List<java.lang.String>>} is not supported");
+    }
+
+    @Test
+    public void shouldReturnFalseWhenIsNull() {
+        Value value = Value.of(10);
+        Assertions.assertThat(value.isNull()).isFalse();
+    }
+
+    @Test
+    void shouldHasCode(){
+        var value = Value.of(asList(10, 20, 30));
+        var valueB = Value.of(asList(10, 20, 30));
+        Assertions.assertThat(value.hashCode()).isEqualTo(valueB.hashCode());
+    }
+
+    @Test
+    void shouldEquals(){
+        var value = Value.of(asList(10, 20, 30));
+        var valueB = Value.of(asList(10, 20, 30));
+        Assertions.assertThat(value).isEqualTo(valueB);
+        Assertions.assertThat(value).isEqualTo(value);
+        Assertions.assertThat(value).isNotEqualTo("value");
+    }
+
+    @Test
+    void shouldInstanceOf(){
+        var value = Value.of(10);
+        Assertions.assertThat(value.isInstanceOf(Integer.class)).isTrue();
+        Assertions.assertThat(value.isInstanceOf(boolean.class)).isFalse();
+    }
+
+    @Test
+    void shouldOfNull(){
+        var value = Value.ofNull();
+        SoftAssertions.assertSoftly(soft -> {
+            soft.assertThat(value.get()).isNull();
+            soft.assertThat(value.isNull()).isTrue();
+        });
     }
 }

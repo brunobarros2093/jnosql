@@ -19,20 +19,24 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
 import jakarta.enterprise.inject.spi.Extension;
 import jakarta.enterprise.inject.spi.ProcessProducer;
-import org.eclipse.jnosql.communication.document.DocumentManager;
+import org.eclipse.jnosql.communication.semistructured.DatabaseManager;
 import org.eclipse.jnosql.mapping.DatabaseMetadata;
 import org.eclipse.jnosql.mapping.DatabaseType;
 import org.eclipse.jnosql.mapping.Databases;
 import org.eclipse.jnosql.mapping.document.query.RepositoryDocumentBean;
-import org.eclipse.jnosql.mapping.reflection.ClassScanner;
+import org.eclipse.jnosql.mapping.metadata.ClassScanner;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
+
 /**
- * Extension to start up the DocumentTemplate and Repository
- * from the {@link org.eclipse.jnosql.mapping.Database} qualifier
+ * This CDI extension, {@code DocumentExtension}, observes the CDI container lifecycle events to perform tasks related to
+ * document-based databases and repository beans.
+ * <p>
+ * Upon initialization, it maintains a set of {@link DatabaseMetadata} instances representing the document databases.
+ * </p>
  */
 public class DocumentExtension implements Extension {
 
@@ -41,14 +45,14 @@ public class DocumentExtension implements Extension {
     private final Set<DatabaseMetadata> databases = new HashSet<>();
 
 
-    <T, X extends DocumentManager> void observes(@Observes final ProcessProducer<T, X> pp) {
+    <T, X extends DatabaseManager> void observes(@Observes final ProcessProducer<T, X> pp) {
         Databases.addDatabase(pp, DatabaseType.DOCUMENT, databases);
     }
 
 
     void onAfterBeanDiscovery(@Observes final AfterBeanDiscovery afterBeanDiscovery) {
 
-        ClassScanner scanner = ClassScanner.INSTANCE;
+        ClassScanner scanner = ClassScanner.load();
 
         Set<Class<?>> crudTypes = scanner.repositoriesStandard();
 
@@ -64,12 +68,10 @@ public class DocumentExtension implements Extension {
 
         crudTypes.forEach(type -> {
             if (!databases.contains(DatabaseMetadata.DEFAULT_DOCUMENT)) {
-                afterBeanDiscovery.addBean(new RepositoryDocumentBean(type, ""));
+                afterBeanDiscovery.addBean(new RepositoryDocumentBean<>(type, ""));
             }
-            databases.forEach(database -> {
-                final RepositoryDocumentBean bean = new RepositoryDocumentBean(type, database.getProvider());
-                afterBeanDiscovery.addBean(bean);
-            });
+            databases.forEach(database ->
+                afterBeanDiscovery.addBean(new RepositoryDocumentBean<>(type, database.getProvider())));
         });
 
     }
