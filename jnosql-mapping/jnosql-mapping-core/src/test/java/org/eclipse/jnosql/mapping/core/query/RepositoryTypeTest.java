@@ -15,9 +15,12 @@
 package org.eclipse.jnosql.mapping.core.query;
 
 
+import jakarta.data.page.CursoredPage;
+import jakarta.data.page.PageRequest;
 import jakarta.data.repository.BasicRepository;
 import jakarta.data.repository.CrudRepository;
 import jakarta.data.repository.Delete;
+import jakarta.data.repository.Find;
 import jakarta.data.repository.Insert;
 import jakarta.data.repository.OrderBy;
 import jakarta.data.repository.Query;
@@ -114,9 +117,21 @@ class RepositoryTypeTest {
     }
 
     @Test
-    void shouldReturnParameterBased() throws NoSuchMethodException {
-        Assertions.assertEquals(RepositoryType.PARAMETER_BASED, RepositoryType.of(getMethod(DevRepository.class, "nope"), CrudRepository.class));
+    void shouldReturnError() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> RepositoryType.of(getMethod(DevRepository.class, "nope"), CrudRepository.class))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void shouldReturnParameterBased() throws NoSuchMethodException {
+        Assertions.assertEquals(RepositoryType.PARAMETER_BASED, RepositoryType.of(getMethod(DevRepository.class, "find"), CrudRepository.class));
+    }
+
+    @Test
+    void shouldReturnParameterBased2() throws NoSuchMethodException {
+        Assertions.assertEquals(RepositoryType.PARAMETER_BASED, RepositoryType.of(getMethod(DevRepository.class, "find2"), CrudRepository.class));
+    }
+
 
     @Test
     void shouldReturnCountBy() throws NoSuchMethodException {
@@ -181,6 +196,12 @@ class RepositoryTypeTest {
                     "findBySum"), Calculate.class));
         }
     }
+
+    @Test
+    void shouldReturnFindByNameOrderByName() throws NoSuchMethodException {
+        Assertions.assertEquals(RepositoryType.CURSOR_PAGINATION, RepositoryType.of(getMethod(DevRepository.class, "findByNameOrderByName"), CrudRepository.class));
+    }
+
     private Method getMethod(Class<?> repository, String methodName) throws NoSuchMethodException {
         return Stream.of(repository.getDeclaredMethods())
                 .filter(m -> m.getName().equals(methodName))
@@ -227,6 +248,14 @@ class RepositoryTypeTest {
 
         @Save
         void save(String name);
+
+        @Find
+        List<String> find(String name);
+
+        @Find
+        @OrderBy("name")
+        List<String> find2(String name);
+        CursoredPage<String> findByNameOrderByName(String name, PageRequest pageable);
 
     }
 

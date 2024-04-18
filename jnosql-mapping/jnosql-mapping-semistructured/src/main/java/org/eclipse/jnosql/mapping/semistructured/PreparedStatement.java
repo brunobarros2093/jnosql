@@ -15,11 +15,21 @@
 package org.eclipse.jnosql.mapping.semistructured;
 
 import org.eclipse.jnosql.communication.semistructured.CommunicationEntity;
+import org.eclipse.jnosql.communication.semistructured.SelectQuery;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-final class PreparedStatement implements org.eclipse.jnosql.mapping.PreparedStatement {
+/**
+ * Represents a prepared statement specifically for JNoSQL operations, facilitating
+ * the binding and execution of queries with parameters. This class wraps a
+ * {@link org.eclipse.jnosql.communication.semistructured.CommunicationPreparedStatement} to integrate easily
+ * with different JNoSQL components and provides a high-level abstraction to interact
+ * with various databases in a semi-structured format.
+ *
+ * @see org.eclipse.jnosql.mapping.PreparedStatement
+ */
+public final class PreparedStatement implements org.eclipse.jnosql.mapping.PreparedStatement {
 
     private final org.eclipse.jnosql.communication.semistructured.CommunicationPreparedStatement preparedStatement;
 
@@ -46,5 +56,15 @@ final class PreparedStatement implements org.eclipse.jnosql.mapping.PreparedStat
     public <T> Optional<T> singleResult() {
         Optional<CommunicationEntity> singleResult = preparedStatement.singleResult();
         return singleResult.map(converter::toEntity);
+    }
+
+    /**
+     * Optionally returns the underlying {@link SelectQuery} associated with this PreparedStatement,
+     * if applicable.
+     *
+     * @return an optional {@link SelectQuery} representing the query details bound to this PreparedStatement
+     */
+    public Optional<SelectQuery> selectQuery(){
+        return preparedStatement.select();
     }
 }

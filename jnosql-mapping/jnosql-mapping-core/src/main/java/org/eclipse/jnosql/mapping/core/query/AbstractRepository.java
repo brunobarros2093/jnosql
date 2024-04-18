@@ -14,6 +14,7 @@
  */
 package org.eclipse.jnosql.mapping.core.query;
 
+import jakarta.data.Order;
 import jakarta.data.page.Page;
 import jakarta.data.page.PageRequest;
 import jakarta.data.repository.CrudRepository;
@@ -22,11 +23,11 @@ import org.eclipse.jnosql.mapping.NoSQLRepository;
 import org.eclipse.jnosql.mapping.metadata.EntityMetadata;
 import org.eclipse.jnosql.mapping.metadata.FieldMetadata;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
@@ -44,7 +45,7 @@ import static org.eclipse.jnosql.mapping.IdNotFoundException.KEY_NOT_FOUND_EXCEP
  * @param <T> The entity type managed by this repository.
  * @param <K> The type of the entity's primary key.
  */
-public abstract class AbstractRepository<T, K> implements NoSQLRepository<T, K>, CrudRepository<T, K> {
+public abstract class AbstractRepository<T, K> implements NoSQLRepository<T, K> {
 
     /**
      * Retrieves the template associated with this repository.
@@ -113,10 +114,9 @@ public abstract class AbstractRepository<T, K> implements NoSQLRepository<T, K>,
     }
 
     @Override
-    public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
+    public <S extends T> List<S> saveAll(List<S> entities) {
         requireNonNull(entities, "entities is required");
-        return StreamSupport.stream(entities.spliterator(), false)
-                .map(this::save).collect(toList());
+        return entities.stream().map(this::save).collect(toList());
     }
 
 
@@ -160,10 +160,9 @@ public abstract class AbstractRepository<T, K> implements NoSQLRepository<T, K>,
     }
 
     @Override
-    public void deleteAll(Iterable<? extends T>  entities) {
+    public void deleteAll(List<? extends T>  entities) {
         Objects.requireNonNull(entities, "entities is required");
-        StreamSupport.stream(entities.spliterator(), false)
-                .forEach(this::delete);
+        entities.forEach(this::delete);
     }
 
     @Override
@@ -173,22 +172,23 @@ public abstract class AbstractRepository<T, K> implements NoSQLRepository<T, K>,
     }
 
     @Override
-    public <S extends T> Iterable<S> insertAll(Iterable<S> entities) {
+    public <S extends T> List<S> insertAll(List<S> entities) {
         Objects.requireNonNull(entities, "entities is required");
-        return template().insert(entities);
+        return stream(template().insert(entities).spliterator(), false)
+                .toList();
     }
 
     @Override
-    public boolean update(T entity) {
+    public <S extends T> S update(S entity) {
         Objects.requireNonNull(entity, "entity is required");
-        return template().update(entity) != null;
+        return template().update(entity);
     }
 
     @Override
-    public int updateAll(Iterable<T> entities) {
+    public <S extends T> List<S> updateAll(List<S> entities) {
         Objects.requireNonNull(entities, "entities is required");
-        template().update(entities);
-        return (int) StreamSupport.stream(entities.spliterator(), false).count();
+        return stream(template().update(entities).spliterator(), false)
+                .toList();
     }
 
     @Override
@@ -202,7 +202,7 @@ public abstract class AbstractRepository<T, K> implements NoSQLRepository<T, K>,
     }
 
     @Override
-    public Page<T> findAll(PageRequest pageRequest) {
+    public Page<T> findAll(PageRequest pageRequest, Order<T> order) {
         throw new UnsupportedOperationException(String.format(getErrorMessage(), "findAll"));
     }
 

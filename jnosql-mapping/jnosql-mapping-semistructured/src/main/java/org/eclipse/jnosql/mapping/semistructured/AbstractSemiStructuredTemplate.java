@@ -16,6 +16,9 @@ package org.eclipse.jnosql.mapping.semistructured;
 
 
 import jakarta.data.exceptions.NonUniqueResultException;
+import jakarta.data.page.CursoredPage;
+import jakarta.data.page.PageRequest;
+import jakarta.data.page.impl.CursoredPageRecord;
 import jakarta.nosql.QueryMapper;
 
 import org.eclipse.jnosql.communication.semistructured.CommunicationEntity;
@@ -34,6 +37,7 @@ import org.eclipse.jnosql.mapping.metadata.InheritanceMetadata;
 
 import java.time.Duration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -46,13 +50,13 @@ import java.util.stream.StreamSupport;
 import static java.util.Objects.requireNonNull;
 
 /**
- * An abstract implementation of the {@link SemistructuredTemplate} interface providing
+ * An abstract implementation of the {@link SemiStructuredTemplate} interface providing
  * a template method for working with semi-structured NoSQL databases.
  * Concrete subclasses must implement methods to provide necessary dependencies and configuration.
  *
- * @see SemistructuredTemplate
+ * @see SemiStructuredTemplate
  */
-public abstract class AbstractSemistructuredTemplate implements SemistructuredTemplate {
+public abstract class AbstractSemiStructuredTemplate implements SemiStructuredTemplate {
 
     private static final QueryParser PARSER = new QueryParser();
 
@@ -297,6 +301,18 @@ public abstract class AbstractSemistructuredTemplate implements SemistructuredTe
             }
         }
         manager().delete(DeleteQuery.delete().from(metadata.name()).build());
+    }
+
+    @Override
+    public <T> CursoredPage<T> selectCursor(SelectQuery query, PageRequest pageRequest){
+        Objects.requireNonNull(query, "query is required");
+        Objects.requireNonNull(pageRequest, "pageRequest is required");
+        CursoredPage<CommunicationEntity> cursoredPage = this.manager().selectCursor(query, pageRequest);
+        List<T> entities = cursoredPage.stream().<T>map(c -> converter().toEntity(c)).toList();
+        PageRequest nextPageRequest = cursoredPage.hasNext()? cursoredPage.nextPageRequest() : null;
+        PageRequest beforePageRequest = cursoredPage.hasPrevious()? cursoredPage.previousPageRequest() : null;
+        List<PageRequest.Cursor> cursors = ((CursoredPageRecord<CommunicationEntity>) cursoredPage).cursors();
+        return new CursoredPageRecord<>(entities, cursors, -1, pageRequest, nextPageRequest, beforePageRequest);
     }
 
     protected <T> T persist(T entity, UnaryOperator<CommunicationEntity> persistAction) {

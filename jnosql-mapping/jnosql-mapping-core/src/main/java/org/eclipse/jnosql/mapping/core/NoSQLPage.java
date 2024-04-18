@@ -32,9 +32,9 @@ public class NoSQLPage<T> implements Page<T> {
 
     private final List<T> entities;
 
-    private final PageRequest<T> pageRequest;
+    private final PageRequest pageRequest;
 
-    private NoSQLPage(List<T> entities, PageRequest<T> pageRequest) {
+    private NoSQLPage(List<T> entities, PageRequest pageRequest) {
         this.entities = entities;
         this.pageRequest = pageRequest;
     }
@@ -65,27 +65,36 @@ public class NoSQLPage<T> implements Page<T> {
     }
 
     @Override
-    public PageRequest<T> pageRequest() {
+    public boolean hasNext() {
+        throw new UnsupportedOperationException("Eclipse JNoSQL has no support for this feature hasNext");
+    }
+
+    @Override
+    public boolean hasPrevious() {
+       throw new UnsupportedOperationException("Eclipse JNoSQL has no support for this feature hasPrevious");
+    }
+
+    @Override
+    public PageRequest pageRequest() {
         return this.pageRequest;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <E> PageRequest<E> pageRequest(Class<E> type) {
-        Objects.requireNonNull(type, "type is required");
-        return (PageRequest<E>) this.pageRequest;
-    }
 
     @Override
-    public PageRequest<T> nextPageRequest() {
-        return this.pageRequest.next();
+    public PageRequest nextPageRequest() {
+        return PageRequest.ofPage(this.pageRequest.page() + 1, this.pageRequest.size(), this.pageRequest.requestTotal());
     }
 
+
     @Override
-    @SuppressWarnings("unchecked")
-    public <E> PageRequest<E> nextPageRequest(Class<E> type) {
-        Objects.requireNonNull(type, "type is required");
-        return (PageRequest<E>) this.pageRequest;
+    public PageRequest previousPageRequest() {
+        return PageRequest.ofPage(this.pageRequest.page() - 1, this.pageRequest.size(), this.pageRequest.requestTotal());
+    }
+
+
+    @Override
+    public boolean hasTotals() {
+        throw new UnsupportedOperationException("Eclipse JNoSQL has no support for this feature hasTotals");
     }
 
     @Override
@@ -125,7 +134,7 @@ public class NoSQLPage<T> implements Page<T> {
      * @return a {@link Page} instance
      * @param <T> the entity type
      */
-    public static <T> Page<T> of(List<T> entities, PageRequest<T> pageRequest) {
+    public static <T> Page<T> of(List<T> entities, PageRequest pageRequest) {
         Objects.requireNonNull(entities, "entities is required");
         Objects.requireNonNull(pageRequest, "pageRequest is required");
         return new NoSQLPage<>(entities, pageRequest);
@@ -138,7 +147,7 @@ public class NoSQLPage<T> implements Page<T> {
      * @return the skip
      * @throws NullPointerException when parameter is null
      */
-    public static <T>  long skip(PageRequest<T> pageRequest) {
+    public static <T>  long skip(PageRequest pageRequest) {
         Objects.requireNonNull(pageRequest, "pageRequest is required");
         return pageRequest.size() * (pageRequest.page() - 1);
     }

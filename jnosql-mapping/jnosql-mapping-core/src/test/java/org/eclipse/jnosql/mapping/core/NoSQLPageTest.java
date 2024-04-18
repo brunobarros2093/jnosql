@@ -16,7 +16,11 @@ package org.eclipse.jnosql.mapping.core;
 
 import jakarta.data.page.Page;
 import jakarta.data.page.PageRequest;
+import org.assertj.core.api.SoftAssertions;
 import org.eclipse.jnosql.mapping.core.entities.Person;
+import org.eclipse.jnosql.mapping.core.entities.inheritance.LargeProject;
+import org.eclipse.jnosql.mapping.core.entities.inheritance.Notification;
+import org.eclipse.jnosql.mapping.core.entities.inheritance.SmsNotification;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -47,6 +51,9 @@ class NoSQLPageTest {
         assertThrows(UnsupportedOperationException.class, page::totalPages);
 
         assertThrows(UnsupportedOperationException.class, page::totalElements);
+        assertThrows(UnsupportedOperationException.class, page::hasNext);
+        assertThrows(UnsupportedOperationException.class, page::hasPrevious);
+        assertThrows(UnsupportedOperationException.class, page::hasTotals);
     }
 
     @Test
@@ -81,7 +88,7 @@ class NoSQLPageTest {
     void shouldPageRequest() {
         Page<Person> page = NoSQLPage.of(Collections.singletonList(Person.builder().withName("Otavio").build()),
                 PageRequest.ofPage(2));
-        PageRequest<Person> pageRequest = page.pageRequest();
+        PageRequest pageRequest = page.pageRequest();
         Assertions.assertNotNull(pageRequest);
         assertEquals(PageRequest.ofPage(2), pageRequest);
     }
@@ -90,7 +97,7 @@ class NoSQLPageTest {
     void shouldNextPageRequest() {
         Page<Person> page = NoSQLPage.of(Collections.singletonList(Person.builder().withName("Otavio").build()),
                 PageRequest.ofPage(2));
-        PageRequest<Person> pageRequest = page.nextPageRequest();
+        PageRequest pageRequest = page.nextPageRequest();
         assertEquals(PageRequest.ofPage(3), pageRequest);
     }
 
@@ -131,4 +138,29 @@ class NoSQLPageTest {
         assertEquals(page.hashCode(), page2.hashCode());
 
     }
+
+    @Test
+    void shouldNext(){
+        Page<Person> page = NoSQLPage.of(Collections.singletonList(Person.builder().withName("Otavio").build()),
+                PageRequest.ofPage(2));
+        PageRequest pageRequest = page.nextPageRequest();
+
+        SoftAssertions.assertSoftly(soft ->{
+            soft.assertThat(pageRequest.page()).isEqualTo(3);
+            soft.assertThat(pageRequest.size()).isEqualTo(10);
+        });
+    }
+
+    @Test
+    void shouldPrevious(){
+        Page<Person> page = NoSQLPage.of(Collections.singletonList(Person.builder().withName("Otavio").build()),
+                PageRequest.ofPage(2));
+        PageRequest pageRequest = page.previousPageRequest();
+
+        SoftAssertions.assertSoftly(soft ->{
+            soft.assertThat(pageRequest.page()).isEqualTo(1);
+            soft.assertThat(pageRequest.size()).isEqualTo(10);
+        });
+    }
+
 }

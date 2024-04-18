@@ -10,7 +10,8 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 
 === Changed
 
-- Upgrade Jakarta Data to version 1.0.0-M3
+- Upgrade Jakarta Data to version 1.0.0-M4
+- Upgrade Jakarta NoSQL to version 1.0.0-M1
 
 === Added
 
@@ -18,6 +19,7 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 - Include the semistructured layers (mapping and communication)
 - Include Column and Document Templates
 - Include support to Embedded and EmbeddedCollection as group
+- Include support to CursoredPage pagination
 
 === Removed
 

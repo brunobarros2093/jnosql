@@ -19,6 +19,7 @@ import jakarta.data.repository.Param;
 import jakarta.data.repository.Query;
 import jakarta.data.Sort;
 import jakarta.inject.Inject;
+import org.eclipse.jnosql.mapping.NoSQLRepository;
 import org.eclipse.jnosql.mapping.PreparedStatement;
 import org.assertj.core.api.Assertions;
 import org.eclipse.jnosql.communication.Condition;
@@ -31,7 +32,7 @@ import org.eclipse.jnosql.communication.semistructured.SelectQuery;
 import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
 import org.eclipse.jnosql.mapping.semistructured.MockProducer;
-import org.eclipse.jnosql.mapping.semistructured.SemistructuredTemplate;
+import org.eclipse.jnosql.mapping.semistructured.SemiStructuredTemplate;
 import org.eclipse.jnosql.mapping.semistructured.entities.Address;
 import org.eclipse.jnosql.mapping.semistructured.entities.Person;
 import org.eclipse.jnosql.mapping.semistructured.entities.Vendor;
@@ -73,7 +74,7 @@ import static org.mockito.Mockito.*;
 @AddExtensions({EntityMetadataExtension.class})
 class CrudRepositoryProxyTest {
 
-    private SemistructuredTemplate template;
+    private SemiStructuredTemplate template;
 
     @Inject
     private EntitiesMetadata entities;
@@ -90,15 +91,15 @@ class CrudRepositoryProxyTest {
 
     @BeforeEach
     public void setUp() {
-        this.template = Mockito.mock(SemistructuredTemplate.class);
+        this.template = Mockito.mock(SemiStructuredTemplate.class);
 
-        SemistructuredRepositoryProxy personHandler = new SemistructuredRepositoryProxy(template,
+        SemiStructuredRepositoryProxy personHandler = new SemiStructuredRepositoryProxy(template,
                 entities, PersonRepository.class, converters);
 
-        SemistructuredRepositoryProxy vendorHandler = new SemistructuredRepositoryProxy(template,
+        SemiStructuredRepositoryProxy vendorHandler = new SemiStructuredRepositoryProxy(template,
                 entities, VendorRepository.class, converters);
 
-        SemistructuredRepositoryProxy addressHandler = new SemistructuredRepositoryProxy(template,
+        SemiStructuredRepositoryProxy addressHandler = new SemiStructuredRepositoryProxy(template,
                 entities, AddressRepository.class, converters);
 
 
@@ -741,7 +742,7 @@ class CrudRepositoryProxyTest {
     }
 
 
-    interface PersonRepository extends CrudRepository<Person, Long> {
+    interface PersonRepository extends NoSQLRepository<Person, Long> {
 
         List<Person> findBySalary_Currency(String currency);
 

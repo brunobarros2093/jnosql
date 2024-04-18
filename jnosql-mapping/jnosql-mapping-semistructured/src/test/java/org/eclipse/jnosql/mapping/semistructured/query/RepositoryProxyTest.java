@@ -17,6 +17,7 @@ package org.eclipse.jnosql.mapping.semistructured.query;
 import jakarta.data.exceptions.MappingException;
 import jakarta.data.repository.By;
 import jakarta.data.repository.Delete;
+import jakarta.data.repository.Find;
 import jakarta.data.repository.Insert;
 import jakarta.data.repository.OrderBy;
 import jakarta.data.repository.BasicRepository;
@@ -38,7 +39,7 @@ import org.eclipse.jnosql.communication.semistructured.SelectQuery;
 import org.eclipse.jnosql.mapping.NoSQLRepository;
 import org.eclipse.jnosql.mapping.core.Converters;
 import org.eclipse.jnosql.mapping.semistructured.EntityConverter;
-import org.eclipse.jnosql.mapping.semistructured.SemistructuredTemplate;
+import org.eclipse.jnosql.mapping.semistructured.SemiStructuredTemplate;
 import org.eclipse.jnosql.mapping.semistructured.MockProducer;
 import org.eclipse.jnosql.mapping.semistructured.entities.Person;
 import org.eclipse.jnosql.mapping.semistructured.entities.PersonStatisticRepository;
@@ -83,9 +84,9 @@ import static org.mockito.Mockito.*;
 @AddPackages(MockProducer.class)
 @AddPackages(Reflections.class)
 @AddExtensions({EntityMetadataExtension.class})
-class ColumnRepositoryProxyTest {
+class RepositoryProxyTest {
 
-    private SemistructuredTemplate template;
+    private SemiStructuredTemplate template;
 
     @Inject
     private EntitiesMetadata entities;
@@ -100,12 +101,12 @@ class ColumnRepositoryProxyTest {
 
     @BeforeEach
     void setUp() {
-        this.template = Mockito.mock(SemistructuredTemplate.class);
+        this.template = Mockito.mock(SemiStructuredTemplate.class);
 
-        SemistructuredRepositoryProxy personHandler = new SemistructuredRepositoryProxy(template,
+        SemiStructuredRepositoryProxy personHandler = new SemiStructuredRepositoryProxy(template,
                 entities, PersonRepository.class, converters);
 
-        SemistructuredRepositoryProxy vendorHandler = new SemistructuredRepositoryProxy(template,
+        SemiStructuredRepositoryProxy vendorHandler = new SemiStructuredRepositoryProxy(template,
                 entities, VendorRepository.class, converters);
 
         when(template.insert(any(Person.class))).thenReturn(Person.builder().build());
@@ -860,6 +861,38 @@ class ColumnRepositoryProxyTest {
             var condition = query.condition().orElseThrow();
             softly.assertThat(condition.condition()).isEqualTo(Condition.EQUALS);
             softly.assertThat(condition.element()).isEqualTo(Element.of("name", "Ada"));
+            softly.assertThat(query.sorts()).isEmpty();
+        });
+    }
+
+    @Test
+    void shouldExecuteMatchParameter2(){
+        personRepository.find2("Ada");
+        ArgumentCaptor<SelectQuery> captor = ArgumentCaptor.forClass(SelectQuery.class);
+        verify(template).select(captor.capture());
+        SelectQuery query = captor.getValue();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(query.name()).isEqualTo("Person");
+            var condition = query.condition().orElseThrow();
+            softly.assertThat(condition.condition()).isEqualTo(Condition.EQUALS);
+            softly.assertThat(condition.element()).isEqualTo(Element.of("name", "Ada"));
+            softly.assertThat(query.sorts()).hasSize(1).contains(Sort.asc("name"));
+        });
+    }
+
+    @Test
+    void shouldExecuteMatchParameter3(){
+        personRepository.find3("Ada");
+        ArgumentCaptor<SelectQuery> captor = ArgumentCaptor.forClass(SelectQuery.class);
+        verify(template).select(captor.capture());
+        SelectQuery query = captor.getValue();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(query.name()).isEqualTo("Person");
+            var condition = query.condition().orElseThrow();
+            softly.assertThat(condition.condition()).isEqualTo(Condition.EQUALS);
+            softly.assertThat(condition.element()).isEqualTo(Element.of("name", "Ada"));
+            softly.assertThat(query.sorts()).hasSize(2).contains(Sort.asc("name"),
+                    Sort.desc("age"));
         });
     }
 
@@ -957,7 +990,17 @@ class ColumnRepositoryProxyTest {
         @OrderBy("age")
         List<Person> findByException();
 
+        @Find
         List<Person> find(@By("name") String name);
+
+        @Find
+        @OrderBy(value = "name")
+        List<Person> find2(@By("name") String name);
+
+        @Find
+        @OrderBy(value = "name")
+        @OrderBy(value = "age", descending = true)
+        List<Person> find3(@By("name") String name);
     }
 
     public interface VendorRepository extends BasicRepository<Vendor, String> {

@@ -14,12 +14,21 @@
  */
 package org.eclipse.jnosql.mapping.semistructured.query;
 
+import jakarta.data.Sort;
+import jakarta.data.page.PageRequest;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.OrderBy;
 import org.eclipse.jnosql.communication.semistructured.DeleteQuery;
 import org.eclipse.jnosql.mapping.core.repository.DynamicQueryMethodReturn;
+import org.eclipse.jnosql.mapping.core.repository.DynamicReturn;
 import org.eclipse.jnosql.mapping.core.repository.RepositoryReflectionUtils;
+import org.eclipse.jnosql.mapping.core.repository.SpecialParameters;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Template method to Repository proxy on column
@@ -27,7 +36,7 @@ import java.util.Map;
  * @param <T> the entity type
  * @param <K> the K entity
  */
-public abstract class AbstractSemistructuredRepositoryProxy<T, K> extends BaseSemistructuredRepository<T, K> {
+public abstract class AbstractSemiStructuredRepositoryProxy<T, K> extends BaseSemiStructuredRepository<T, K> {
 
     @Override
     protected Object executeQuery(Object instance, Method method, Object[] params) {
@@ -40,6 +49,25 @@ public abstract class AbstractSemistructuredRepositoryProxy<T, K> extends BaseSe
                 .withQueryConverter(q -> template().query(q)).build();
         return methodReturn.execute();
     }
+
+    @Override
+    protected Object executeCursorPagination(Object instance, Method method, Object[] params) {
+        if (method.getAnnotation(Find.class) == null) {
+            var query = query(method, params);
+            SpecialParameters special = DynamicReturn.findSpecialParameters(params);
+            PageRequest pageRequest = special.pageRequest()
+                    .orElseThrow(() -> new IllegalArgumentException("Pageable is required in the method signature as parameter at " + method));
+            return this.template().selectCursor(query, pageRequest);
+        } else {
+            Map<String, Object> parameters = RepositoryReflectionUtils.INSTANCE.getBy(method, params);
+            var query = SemiStructuredParameterBasedQuery.INSTANCE.toQuery(parameters, getSorts(method), entityMetadata());
+            SpecialParameters special = DynamicReturn.findSpecialParameters(params);
+            PageRequest pageRequest = special.pageRequest()
+                    .orElseThrow(() -> new IllegalArgumentException("Pageable is required in the method signature as parameter at " + method));
+            return this.template().selectCursor(query, pageRequest);
+        }
+    }
+
 
     @Override
     protected Object executeDeleteByAll(Object instance, Method method, Object[] params) {
@@ -75,8 +103,17 @@ public abstract class AbstractSemistructuredRepositoryProxy<T, K> extends BaseSe
     protected Object executeParameterBased(Object instance, Method method, Object[] params) {
         Class<?> type = entityMetadata().type();
         Map<String, Object> parameters = RepositoryReflectionUtils.INSTANCE.getBy(method, params);
-        var query = SemistructuredParameterBasedQuery.INSTANCE.toQuery(parameters, entityMetadata());
+        var query = SemiStructuredParameterBasedQuery.INSTANCE.toQuery(parameters, getSorts(method), entityMetadata());
         return executeFindByQuery(method, params, type, updateQueryDynamically(params, query));
+    }
+
+    private static List<Sort<?>> getSorts(Method method) {
+        List<Sort<?>> sorts = new ArrayList<>();
+        OrderBy[] orders = method.getAnnotationsByType(OrderBy.class);
+        Stream.of(orders)
+                .map(o -> (o.descending() ? Sort.desc(o.value()) : Sort.asc(o.value())))
+                .forEach(sorts::add);
+        return sorts;
     }
 
 }
