@@ -153,7 +153,7 @@ Eclipse JNoSQL offers a mapping implementation for Key-Value NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-key-value</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ----
 
@@ -278,7 +278,7 @@ Eclipse JNoSQL offers a mapping implementation for Column NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-column</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ----
 
@@ -299,7 +299,7 @@ Optional<Car> car = template.find(Car.class, 1L);
 
 template.delete(Car.class).where("id").eq(1L).execute();
 
-Optional<Car> result = template.singleResult("select * from Car where _id = 1");
+Optional<Car> result = template.singleResult("FROM Car WHERE _id = 1");
 ----
 
 Column Family is database agnostic. Thus, you can change the database in your application with no or minimal impact on source code.
@@ -376,7 +376,7 @@ Eclipse JNoSQL offers a mapping implementation for Document NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-document</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ----
 
@@ -398,7 +398,7 @@ Optional<Car> car = template.find(Car.class, 1L);
 
 template.delete(Car.class).where("id").eq(1L).execute();
 
-Optional<Car> result = template.singleResult("select * from Car where _id = 1");
+Optional<Car> result = template.singleResult("FROM Car WHERE _id = 1");
 ----
 
 Document is database agnostic. Thus, you can change the database in your application with no or minimal impact on source code.
@@ -475,7 +475,7 @@ Eclipse JNoSQL offers a mapping implementation for Graph NoSQL types:
 <dependency>
     <groupId>org.eclipse.jnosql.mapping</groupId>
     <artifactId>jnosql-mapping-graph</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ----
 

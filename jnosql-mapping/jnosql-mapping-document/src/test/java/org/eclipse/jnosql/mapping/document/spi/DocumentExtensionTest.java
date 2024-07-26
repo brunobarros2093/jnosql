@@ -57,7 +57,6 @@ class DocumentExtensionTest {
     @Inject
     private DocumentTemplate template;
 
-
     @Test
     void shouldInitiate() {
         assertNotNull(repository);

@@ -15,12 +15,13 @@ import jakarta.data.exceptions.NonUniqueResultException;
 import org.eclipse.jnosql.communication.Params;
 import org.eclipse.jnosql.communication.QueryException;
 
-import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -28,11 +29,13 @@ import java.util.stream.Stream;
  */
 public final class CommunicationPreparedStatement {
 
-    private final CommunicationEntity entity;
+    private static final UnaryOperator<SelectQuery> SELECT_MAPPER_DEFAULT = s -> s;
 
     private final SelectQuery selectQuery;
 
     private final DeleteQuery deleteQuery;
+
+    private final UpdateQuery updateQuery;
 
     private final PreparedStatementType type;
 
@@ -42,28 +45,26 @@ public final class CommunicationPreparedStatement {
 
     private final List<String> paramsLeft;
 
-    private final Duration duration;
-
     private final DatabaseManager manager;
 
-    private CommunicationPreparedStatement(CommunicationEntity entity,
-                                           SelectQuery selectQuery,
+    private UnaryOperator<SelectQuery> selectMapper = SELECT_MAPPER_DEFAULT;
+
+    private CommunicationPreparedStatement(SelectQuery selectQuery,
                                            DeleteQuery deleteQuery,
+                                           UpdateQuery updateQuery,
                                            PreparedStatementType type,
                                            Params params,
                                            String query,
                                            List<String> paramsLeft,
-                                           Duration duration,
                                            DatabaseManager manager) {
-        this.entity = entity;
         this.selectQuery = selectQuery;
         this.deleteQuery = deleteQuery;
+        this.updateQuery = updateQuery;
         this.type = type;
         this.params = params;
         this.query = query;
         this.paramsLeft = paramsLeft;
         this.manager = manager;
-        this.duration = duration;
     }
 
     /**
@@ -84,11 +85,38 @@ public final class CommunicationPreparedStatement {
     }
 
     /**
+     * Binds an argument to a positional parameter.
+     *
+     * @param index the parameter index
+     * @param value the parameter value
+     * @return the same query instance
+     * @throws NullPointerException when either name or value is null
+     * The first parameter is 1, the second is 2, ...
+     */
+    public CommunicationPreparedStatement bind(int index, Object value) {
+        Objects.requireNonNull(value, "value is required");
+
+        if(index < 1) {
+            throw new IllegalArgumentException("The index should be greater than zero");
+        } else if(index == 1) {
+            if(paramsLeft.contains("?")){
+                paramsLeft.remove("?");
+                params.bind("?", value);
+                return this;
+            }
+        }
+        var name = "?" + index;
+        paramsLeft.remove("?" + index);
+        params.bind(name, value);
+        return this;
+    }
+
+    /**
      * Returns the select query if present.
      *
      * @return the select query
      */
-    public Optional<SelectQuery> select(){
+    public Optional<SelectQuery> select() {
         return Optional.ofNullable(selectQuery);
     }
 
@@ -104,25 +132,57 @@ public final class CommunicationPreparedStatement {
         }
         switch (type) {
             case SELECT -> {
-                return manager.select(selectQuery);
+                return manager.select(operator().apply(selectQuery));
             }
             case DELETE -> {
                 manager.delete(deleteQuery);
                 return Stream.empty();
             }
             case UPDATE -> {
-                return Stream.of(manager.update(entity));
-            }
-            case INSERT -> {
-                if (Objects.isNull(duration)) {
-                    return Stream.of(manager.insert(entity));
-                } else {
-                    return Stream.of(manager.insert(entity, duration));
-                }
+                return StreamSupport.stream(manager.update(updateQuery).spliterator(), false);
             }
             default -> throw new UnsupportedOperationException("there is not support to operation type: " + type);
         }
     }
+
+    /**
+     * Returns the operator to be used in the query.
+     *
+     * @return the operator
+     */
+    public UnaryOperator<SelectQuery> operator() {
+        return this.selectMapper;
+    }
+
+    /**
+     * Sets the operator to be used in the query.
+     *
+     * @param selectMapper the operator
+     */
+    public void setSelectMapper(UnaryOperator<SelectQuery> selectMapper) {
+        Objects.requireNonNull(selectMapper, "selectMapper is required");
+        this.selectMapper = selectMapper;
+    }
+
+    /**
+     * Returns the number of elements in the result.
+     *
+     * @return the number of elements
+     * @throws QueryException if there are parameters left to bind
+     * @throws IllegalArgumentException if the operation is not a count operation
+     */
+    public long count(){
+        if (!paramsLeft.isEmpty()) {
+            throw new QueryException("Check all the parameters before execute the query, params left: " + paramsLeft);
+        }
+        if (PreparedStatementType.COUNT.equals(type)) {
+            return manager.count(selectQuery);
+        }
+        throw new IllegalArgumentException("The count operation is only allowed for COUNT queries");
+
+    }
+
+
 
     /**
      * Returns the single result as an optional entity.
@@ -146,7 +206,7 @@ public final class CommunicationPreparedStatement {
     }
 
     enum PreparedStatementType {
-        SELECT, DELETE, UPDATE, INSERT
+        SELECT, DELETE, UPDATE, COUNT
     }
 
 
@@ -160,9 +220,15 @@ public final class CommunicationPreparedStatement {
             Params params,
             String query,
             DatabaseManager manager) {
-        return new CommunicationPreparedStatement(null, selectQuery,
-                null, PreparedStatementType.SELECT, params, query,
-                params.getParametersNames(), null, manager);
+        if (selectQuery.isCount()) {
+            return new CommunicationPreparedStatement(selectQuery,
+                    null, null, PreparedStatementType.COUNT, params, query,
+                    params.getParametersNames(), manager);
+        } else {
+            return new CommunicationPreparedStatement(selectQuery,
+                    null, null, PreparedStatementType.SELECT, params, query,
+                    params.getParametersNames(), manager);
+        }
 
     }
 
@@ -171,30 +237,22 @@ public final class CommunicationPreparedStatement {
                                                  String query,
                                                  DatabaseManager manager) {
 
+        return new CommunicationPreparedStatement(null,
+                deleteQuery, null, PreparedStatementType.DELETE, params,
+                query,
+                params.getParametersNames(),
+                manager);
+
+    }
+
+    static CommunicationPreparedStatement update(UpdateQuery updateQuery,
+                                                 Params params,
+                                                 String query,
+                                                 DatabaseManager manager) {
         return new CommunicationPreparedStatement(null, null,
-                deleteQuery, PreparedStatementType.DELETE, params, query,
-                params.getParametersNames(), null, manager);
-
-    }
-
-    static CommunicationPreparedStatement insert(CommunicationEntity entity,
-                                                 Params params,
-                                                 String query,
-                                                 Duration duration,
-                                                 DatabaseManager manager) {
-        return new CommunicationPreparedStatement(entity, null,
-                null, PreparedStatementType.INSERT, params, query,
-                params.getParametersNames(), duration, manager);
-
-    }
-
-    static CommunicationPreparedStatement update(CommunicationEntity entity,
-                                                 Params params,
-                                                 String query,
-                                                 DatabaseManager manager) {
-        return new CommunicationPreparedStatement(entity, null,
-                null, PreparedStatementType.UPDATE, params, query,
-                params.getParametersNames(), null, manager);
+                updateQuery,
+                PreparedStatementType.UPDATE, params, query,
+                params.getParametersNames(),  manager);
 
     }
 }

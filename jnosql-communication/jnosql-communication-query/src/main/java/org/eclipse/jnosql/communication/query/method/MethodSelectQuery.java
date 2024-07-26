@@ -29,10 +29,16 @@ final class MethodSelectQuery  implements SelectQuery {
 
     private final List<Sort<?>> sorts;
 
-    MethodSelectQuery(String entity, List<Sort<?>> sorts, Where where) {
+    private final long limit;
+
+    private final boolean count;
+
+    MethodSelectQuery(String entity, List<Sort<?>> sorts, Where where, long limit, boolean count) {
         this.entity = entity;
         this.sorts = sorts;
         this.where = where;
+        this.limit = limit;
+        this.count = count;
     }
 
 
@@ -57,12 +63,17 @@ final class MethodSelectQuery  implements SelectQuery {
 
     @Override
     public long limit() {
-        return 0;
+        return limit;
     }
 
     @Override
     public List<Sort<?>> orderBy() {
         return Collections.unmodifiableList(sorts);
+    }
+
+    @Override
+    public boolean isCount() {
+        return count;
     }
 
     public boolean equals(Object o) {

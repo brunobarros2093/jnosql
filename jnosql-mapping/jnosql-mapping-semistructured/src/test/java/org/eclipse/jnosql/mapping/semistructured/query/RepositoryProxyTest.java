@@ -604,16 +604,61 @@ class RepositoryProxyTest {
 
     @Test
     void shouldExecuteJNoSQLQuery() {
+        PreparedStatement preparedStatement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(), Mockito.anyString())).thenReturn(preparedStatement);
         personRepository.findByQuery();
-        verify(template).query("select * from Person");
+        verify(template).prepare("FROM Person", "Person");
     }
 
     @Test
     void shouldExecuteJNoSQLPrepare() {
-        PreparedStatement statement = Mockito.mock(PreparedStatement.class);
-        when(template.prepare(Mockito.anyString())).thenReturn(statement);
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(),Mockito.anyString() )).thenReturn(statement);
         personRepository.findByQuery("Ada");
         verify(statement).bind("id", "Ada");
+    }
+
+    @Test
+    void shouldExecuteJNoSQLPrepareAge() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(),Mockito.anyString() )).thenReturn(statement);
+        personRepository.findByQueryAge(10);
+        verify(statement).bind("?1", 10);
+    }
+
+    @Test
+    void shouldExecuteJNoSQLPrepareUpdate() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(),Mockito.anyString() )).thenReturn(statement);
+        personRepository.update(10, "id");
+        verify(statement).bind("?1", 10);
+        verify(statement).bind("?2", "id");
+    }
+
+    @Test
+    void shouldExecuteJNoSQLPrepareUpdate2() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(),Mockito.anyString() )).thenReturn(statement);
+        personRepository.update("name", "id");
+        verify(statement).bind("name", "name");
+        verify(statement).bind("id", "id");
+    }
+
+    @Test
+    void shouldExecuteJNoSQLPrepareDelete() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(),Mockito.anyString() )).thenReturn(statement);
+        personRepository.delete("10");
+        verify(statement).bind("?1", "10");
+    }
+
+    @Test
+    void shouldExecuteJNoSQLPrepareDelete2() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(),Mockito.anyString() )).thenReturn(statement);
+        personRepository.delete("name", "id");
+        verify(statement).bind("name", "name");
+        verify(statement).bind("id", "id");
     }
 
     @Test
@@ -866,6 +911,21 @@ class RepositoryProxyTest {
     }
 
     @Test
+    void shouldExecuteMatchParameterId(){
+        personRepository.find(10L);
+        var captor = ArgumentCaptor.forClass(SelectQuery.class);
+        verify(template).select(captor.capture());
+        SelectQuery query = captor.getValue();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(query.name()).isEqualTo("Person");
+            var condition = query.condition().orElseThrow();
+            softly.assertThat(condition.condition()).isEqualTo(Condition.EQUALS);
+            softly.assertThat(condition.element()).isEqualTo(Element.of("_id", 10L));
+            softly.assertThat(query.sorts()).hasSize(1).contains(Sort.asc("_id"));
+        });
+    }
+
+    @Test
     void shouldExecuteMatchParameter2(){
         personRepository.find2("Ada");
         ArgumentCaptor<SelectQuery> captor = ArgumentCaptor.forClass(SelectQuery.class);
@@ -973,11 +1033,30 @@ class RepositoryProxyTest {
 
         Set<Person> findByNameLike(String name);
 
-        @Query("select * from Person")
+        @Query("FROM Person")
         Optional<Person> findByQuery();
 
-        @Query("select * from Person where id = @id")
+        @Query(" ")
+        Optional<Person> all();
+
+        @Query("FROM Person WHERE id = :id")
         Optional<Person> findByQuery(@Param("id") String id);
+
+        @Query("FROM Person WHERE id = ?1")
+        Optional<Person> findByQueryAge(int age);
+
+        @Query("UPDATE Person SET name = ?1 WHERE id = ?2")
+        void update(int age, String id);
+
+        @Query("UPDATE Person SET name = :name WHERE id = :id")
+        void update(@Param("name") String name, @Param("id") String id);
+
+
+        @Query("DELETE FROM Person WHERE id = ?1")
+        void delete(String id);
+
+        @Query("DELETE FROM Person WHERE name = :name AND id = :id")
+        void delete(@Param("name") String name,@Param("id") String id);
 
         long countByName(String name);
 
@@ -989,6 +1068,11 @@ class RepositoryProxyTest {
         @OrderBy("name")
         @OrderBy("age")
         List<Person> findByException();
+
+        @OrderBy("id")
+        @Find
+        List<Person> find(@By("id") Long id);
+
 
         @Find
         List<Person> find(@By("name") String name);

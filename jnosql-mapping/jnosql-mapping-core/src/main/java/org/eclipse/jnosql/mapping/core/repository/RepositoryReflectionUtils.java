@@ -44,11 +44,18 @@ public enum RepositoryReflectionUtils {
         Map<String, Object> params = new HashMap<>();
 
         Parameter[] parameters = method.getParameters();
+        int queryIndex = 1;
         for (int index = 0; index < parameters.length; index++) {
             Parameter parameter = parameters[index];
+            boolean isNotSpecialParameter = SpecialParameters.isNotSpecialParameter(parameter.getType());
             Param param = parameter.getAnnotation(Param.class);
             if (Objects.nonNull(param)) {
                 params.put(param.value(), args[index]);
+            } else if (isNotSpecialParameter) {
+                if (parameter.isNamePresent()) {
+                    params.put(parameter.getName(), args[index]);
+                }
+                params.put("?" + queryIndex++, args[index]);
             }
         }
         return params;
@@ -67,9 +74,12 @@ public enum RepositoryReflectionUtils {
         Parameter[] parameters = method.getParameters();
         for (int index = 0; index < parameters.length; index++) {
             Parameter parameter = parameters[index];
+            boolean isNotSpecialParameter = SpecialParameters.isNotSpecialParameter(parameter.getType());
             By by = parameter.getAnnotation(By.class);
             if (Objects.nonNull(by)) {
                 params.put(by.value(), args[index]);
+            } else if(parameter.isNamePresent() && isNotSpecialParameter) {
+                params.put(parameter.getName(), args[index]);
             }
         }
         return params;

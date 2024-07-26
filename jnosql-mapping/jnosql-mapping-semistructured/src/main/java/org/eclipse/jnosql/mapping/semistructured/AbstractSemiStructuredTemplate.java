@@ -224,12 +224,29 @@ public abstract class AbstractSemiStructuredTemplate implements SemiStructuredTe
     @Override
     public <T> Stream<T> query(String query) {
         requireNonNull(query, "query is required");
-        return PARSER.query(query, manager(), getObserver()).map(c -> converter().toEntity(c));
+        return PARSER.query(query, null, manager(), getObserver()).map(c -> converter().toEntity(c));
+    }
+
+    @Override
+    public <T> Stream<T> query(String query, String entity) {
+        requireNonNull(query, "query is required");
+        requireNonNull(entity, "entity is required");
+        return PARSER.query(query, entity, manager(), getObserver()).map(c -> converter().toEntity(c));
     }
 
     @Override
     public <T> Optional<T> singleResult(String query) {
-        Stream<T> entities = query(query);
+        return singleResult(query, null);
+    }
+
+    @Override
+    public <T> Optional<T> singleResult(String query, String entityName) {
+        Stream<T> entities;
+        if(entityName == null){
+            entities = query(query);
+        } else {
+            entities = query(query, entityName);
+        }
         final Iterator<T> iterator = entities.iterator();
 
         if (!iterator.hasNext()) {
@@ -244,13 +261,18 @@ public abstract class AbstractSemiStructuredTemplate implements SemiStructuredTe
 
     @Override
     public org.eclipse.jnosql.mapping.PreparedStatement prepare(String query) {
-        return new PreparedStatement(PARSER.prepare(query, manager(), getObserver()), converter());
+        return new PreparedStatement(PARSER.prepare(query, null, manager(), getObserver()), converter());
+    }
+
+    @Override
+    public org.eclipse.jnosql.mapping.PreparedStatement prepare(String query, String entity) {
+        return new PreparedStatement(PARSER.prepare(query, entity, manager(), getObserver()), converter());
     }
 
 
     @Override
-    public long count(String columnFamily) {
-        return manager().count(columnFamily);
+    public long count(String entity) {
+        return manager().count(entity);
     }
 
 

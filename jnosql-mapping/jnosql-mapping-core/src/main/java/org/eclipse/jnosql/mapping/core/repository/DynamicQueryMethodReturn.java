@@ -21,7 +21,6 @@ import org.eclipse.jnosql.mapping.PreparedStatement;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * This instance has the information to run the JNoSQL native query at {@link jakarta.data.repository.CrudRepository}
@@ -32,37 +31,32 @@ public final class DynamicQueryMethodReturn implements MethodDynamicExecutable {
     private final Method method;
     private final Object[] args;
     private final Class<?> typeClass;
-    private final java.util.function.Function<String, Stream<?>> queryConverter;
     private final Function<String, PreparedStatement> prepareConverter;
 
-    private DynamicQueryMethodReturn(Method method, Object[] args, Class<?> typeClass, Function<String, Stream<?>> queryConverter,
+    private DynamicQueryMethodReturn(Method method, Object[] args, Class<?> typeClass,
                                      Function<String, PreparedStatement> prepareConverter) {
         this.method = method;
         this.args = args;
         this.typeClass = typeClass;
-        this.queryConverter = queryConverter;
         this.prepareConverter = prepareConverter;
     }
 
-    Method getMethod() {
+    Method method() {
         return method;
     }
 
-    Object[] getArgs() {
+    Object[] args() {
         return args;
     }
 
-    Class<?> getTypeClass() {
+    Class<?> typeClass() {
         return typeClass;
     }
 
-    Function<String, Stream<?>> getQueryConverter() {
-        return queryConverter;
-    }
-
-    Function<String, PreparedStatement> getPrepareConverter() {
+    Function<String, PreparedStatement> prepareConverter() {
         return prepareConverter;
     }
+
 
     public static DynamicQueryMethodReturnBuilder builder() {
         return new DynamicQueryMethodReturnBuilder();
@@ -80,8 +74,6 @@ public final class DynamicQueryMethodReturn implements MethodDynamicExecutable {
         private Object[] args;
 
         private Class<?> typeClass;
-
-        private Function<String, Stream<?>> queryConverter;
 
         private Function<String, PreparedStatement> prepareConverter;
 
@@ -105,22 +97,17 @@ public final class DynamicQueryMethodReturn implements MethodDynamicExecutable {
             return this;
         }
 
-        public DynamicQueryMethodReturnBuilder withQueryConverter(Function<String, Stream<?>> queryConverter) {
-            this.queryConverter = queryConverter;
-            return this;
-        }
-
         public DynamicQueryMethodReturnBuilder withPrepareConverter(Function<String, PreparedStatement> prepareConverter) {
             this.prepareConverter = prepareConverter;
             return this;
         }
+
         public DynamicQueryMethodReturn build() {
             Objects.requireNonNull(method, "method is required");
             Objects.requireNonNull(typeClass, "typeClass is required");
-            Objects.requireNonNull(queryConverter, "queryConverter is required");
             Objects.requireNonNull(prepareConverter, "prepareConverter is required");
 
-            return new DynamicQueryMethodReturn(method, args, typeClass, queryConverter, prepareConverter);
+            return new DynamicQueryMethodReturn(method, args, typeClass, prepareConverter);
         }
     }
 

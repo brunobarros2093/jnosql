@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -96,6 +97,6 @@ public class DynamicQuery implements Supplier<SelectQuery> {
     public static DynamicQuery of(Object[] args, SelectQuery query) {
         Objects.requireNonNull(args, "args is required");
         Objects.requireNonNull(query, "query is required");
-        return new DynamicQuery(DynamicReturn.findSpecialParameters(args), query);
+        return new DynamicQuery(DynamicReturn.findSpecialParameters(args, Function.identity()), query);
     }
 }

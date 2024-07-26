@@ -20,31 +20,41 @@ import jakarta.data.page.PageRequest;
 import jakarta.data.Sort;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.BOOLEAN;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SpecialParametersTest {
 
+    private static final Function<String, String> SORT_MAPPER = Function.identity();
+
     @Test
     void shouldReturnEmpty() {
-        SpecialParameters parameters = SpecialParameters.of(new Object[0]);
+        SpecialParameters parameters = SpecialParameters.of(new Object[0], SORT_MAPPER);
         assertTrue(parameters.isEmpty());
     }
 
     @Test
     void shouldReturnEmptyNonSpecialParameters() {
-        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio"});
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio"}, SORT_MAPPER);
         assertTrue(parameters.isEmpty());
     }
 
     @Test
     void shouldReturnPageRequest() {
         PageRequest pageRequest = PageRequest.ofPage(10);
-        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", pageRequest});
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", pageRequest}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         Assertions.assertEquals(pageRequest, parameters.pageRequest().orElseThrow());
         assertTrue(parameters.isSortEmpty());
@@ -53,7 +63,7 @@ class SpecialParametersTest {
     @Test
     void shouldReturnSort() {
         Sort<?> sort = Sort.asc("name");
-        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", sort});
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", sort}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         assertTrue(parameters.hasOnlySort());
         assertTrue(parameters.pageRequest().isEmpty());
@@ -67,7 +77,7 @@ class SpecialParametersTest {
         Sort<?> sort = Sort.asc("name");
         PageRequest pageRequest = PageRequest.ofPage(10);
 
-        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", sort, pageRequest});
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", sort, pageRequest}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         assertFalse(parameters.hasOnlySort());
         Assertions.assertEquals(pageRequest, parameters.pageRequest().orElseThrow());
@@ -78,7 +88,7 @@ class SpecialParametersTest {
 
     @Test
     void shouldReturnLimit() {
-        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", Limit.of(10)});
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", Limit.of(10)}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         Optional<Limit> limit = parameters.limit();
         assertTrue(limit.isPresent());
@@ -90,7 +100,7 @@ class SpecialParametersTest {
     @Test
     void shouldReturnIterableSort(){
         SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio",
-                List.of(Sort.asc("name"), Sort.desc("age"))});
+                List.of(Sort.asc("name"), Sort.desc("age"))}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         assertThat(parameters.sorts()).hasSize(2)
                 .containsExactly(Sort.asc("name"),
@@ -100,7 +110,7 @@ class SpecialParametersTest {
     @Test
     void shouldReturnOrder(){
         Order<?> order = Order.by(Sort.asc("name"), Sort.desc("age"));
-        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", order});
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", order}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         assertFalse(parameters.isSortEmpty());
         assertThat(parameters.sorts()).hasSize(2)
@@ -113,12 +123,88 @@ class SpecialParametersTest {
         PageRequest pageRequest = PageRequest.ofPage(10);
         Order<?> order = Order.by(Sort.asc("name"));
         SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio",
-                List.of(Sort.asc("name"), Sort.desc("age")), pageRequest, order});
+                List.of(Sort.asc("name"), Sort.desc("age")), pageRequest, order}, SORT_MAPPER);
         assertFalse(parameters.isEmpty());
         Assertions.assertEquals(pageRequest, parameters.pageRequest().orElseThrow());
         assertFalse(parameters.isSortEmpty());
         assertThat(parameters.sorts()).hasSize(3)
                 .contains(Sort.asc("name"),
                         Sort.desc("age"));
+    }
+
+    @Test
+    void shouldReturnArrayOrder(){
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio",
+                new Sort[]{Sort.asc("name"), Sort.desc("age")}}, SORT_MAPPER);
+        assertFalse(parameters.isEmpty());
+        assertThat(parameters.sorts()).hasSize(2)
+                .containsExactly(Sort.asc("name"),
+                        Sort.desc("age"));
+    }
+
+    @Test
+    void shouldReturnOrderMapper(){
+        Function<String, String> upper = String::toUpperCase;
+        Order<?> order = Order.by(Sort.asc("name"), Sort.desc("age"));
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio", order}, upper);
+        assertFalse(parameters.isEmpty());
+        assertFalse(parameters.isSortEmpty());
+        assertThat(parameters.sorts()).hasSize(2)
+                .contains(Sort.asc("NAME"),
+                        Sort.desc("AGE"));
+    }
+
+    @Test
+    void shouldReturnIterableOrderMapper(){
+        Function<String, String> upper = String::toUpperCase;
+        PageRequest pageRequest = PageRequest.ofPage(10);
+        Order<?> order = Order.by(Sort.asc("name"));
+        SpecialParameters parameters = SpecialParameters.of(new Object[]{10, "Otavio",
+                List.of(Sort.asc("name"), Sort.desc("age")), pageRequest, order}, upper);
+        assertFalse(parameters.isEmpty());
+        Assertions.assertEquals(pageRequest, parameters.pageRequest().orElseThrow());
+        assertFalse(parameters.isSortEmpty());
+        assertThat(parameters.sorts()).hasSize(3)
+                .contains(Sort.asc("NAME"),
+                        Sort.desc("AGE"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {Sort.class, Limit.class, PageRequest.class, Order.class})
+    void shouldReturnTrueSpecialParameter(Class<?> type){
+        org.assertj.core.api.Assertions.assertThat(SpecialParameters.isSpecialParameter(type)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {String.class, Integer.class, Long.class, Double.class, Float.class, Boolean.class, Object.class})
+    void shouldReturnNotSpecialParameter(Class<?> type){
+        org.assertj.core.api.Assertions.assertThat(SpecialParameters.isNotSpecialParameter(type)).isTrue();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideSpecialParameters")
+    void shouldReturnTrueSpecialParameter(Object parameter){
+        org.assertj.core.api.Assertions.assertThat(SpecialParameters.isSpecialParameter(parameter)).isTrue();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideNonSpecialParameters")
+    void shouldReturnNotSpecialParameter(Object parameter){
+        org.assertj.core.api.Assertions.assertThat(SpecialParameters.isNotSpecialParameter(parameter)).isTrue();
+    }
+
+
+    private static Stream<Arguments> provideSpecialParameters() {
+        return Stream.of(Arguments.of(Sort.asc("name")),
+                Arguments.of(Limit.of(10)),
+                Arguments.of(PageRequest.ofPage(10)),
+                Arguments.of(Order.by(Sort.asc("name"), Sort.desc("age"))));
+    }
+
+    private static Stream<Arguments> provideNonSpecialParameters() {
+        return Stream.of(Arguments.of("123"),
+                Arguments.of(10L),
+                Arguments.of(BigDecimal.valueOf(10)),
+                Arguments.of(Boolean.TRUE));
     }
 }

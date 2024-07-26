@@ -17,7 +17,9 @@ package org.eclipse.jnosql.mapping.semistructured;
 import org.eclipse.jnosql.communication.semistructured.CommunicationEntity;
 import org.eclipse.jnosql.communication.semistructured.SelectQuery;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 /**
@@ -58,6 +60,16 @@ public final class PreparedStatement implements org.eclipse.jnosql.mapping.Prepa
         return singleResult.map(converter::toEntity);
     }
 
+    @Override
+    public long count() {
+        return preparedStatement.count();
+    }
+
+    @Override
+    public boolean isCount() {
+        return selectQuery().map(SelectQuery::isCount).orElse(false);
+    }
+
     /**
      * Optionally returns the underlying {@link SelectQuery} associated with this PreparedStatement,
      * if applicable.
@@ -67,4 +79,16 @@ public final class PreparedStatement implements org.eclipse.jnosql.mapping.Prepa
     public Optional<SelectQuery> selectQuery(){
         return preparedStatement.select();
     }
+
+    /**
+     * Sets the operator to be used in the query.
+     *
+     * @param selectMapper the operator
+     */
+    public void setSelectMapper(UnaryOperator<SelectQuery> selectMapper) {
+        Objects.requireNonNull(selectMapper, "selectMapper is required");
+        this.preparedStatement.setSelectMapper(selectMapper);
+    }
+
+
 }

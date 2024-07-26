@@ -46,7 +46,7 @@ public enum RepositoryType {
     /**
      * General query method returning the repository type.It starts with "findBy" key word
      */
-    FIND_BY("findBy"),
+    FIND_BY("find"),
     /**
      * Delete query method returning either no result (void) or the delete count. It starts with "deleteBy" keyword
      */
@@ -56,6 +56,9 @@ public enum RepositoryType {
      */
     FIND_ALL("findAll"),
     /**
+     * Count projection returning a numeric result. It starts and ends with "countAll" keyword
+     */
+    COUNT_ALL("countAll"),/**
      * Count projection returning a numeric result. It starts with "countBy" keyword
      */
     COUNT_BY("countBy"),
@@ -115,7 +118,7 @@ public enum RepositoryType {
             .or(Predicate.isEqual(BasicRepository.class))
             .or(Predicate.isEqual(NoSQLRepository.class));
 
-    private static final Set<RepositoryType> KEY_WORLD_METHODS = EnumSet.of(FIND_BY, DELETE_BY, COUNT_BY, EXISTS_BY);
+    private static final Set<RepositoryType> KEY_WORLD_METHODS = EnumSet.of(FIND_BY, DELETE_BY, COUNT_ALL, COUNT_BY, EXISTS_BY);
 
     private static final Set<RepositoryType> OPERATION_ANNOTATIONS = EnumSet.of(INSERT, SAVE, DELETE, UPDATE, QUERY, PARAMETER_BASED);
     private final String keyword;
@@ -151,9 +154,6 @@ public enum RepositoryType {
         if (IS_REPOSITORY_METHOD.test(declaringClass)) {
             return DEFAULT;
         }
-        if (method.getAnnotationsByType(OrderBy.class).length > 0) {
-            return method.getAnnotation(Find.class) == null? ORDER_BY: PARAMETER_BASED;
-        }
         if (!repositoryType.equals(declaringClass) && isCustomRepository(declaringClass)) {
             return CUSTOM_REPOSITORY;
         }
@@ -163,6 +163,9 @@ public enum RepositoryType {
         String methodName = method.getName();
         if (FIND_ALL.keyword.equals(methodName)) {
             return FIND_ALL;
+        }
+        if (method.getAnnotationsByType(OrderBy.class).length > 0) {
+            return method.getAnnotation(Find.class) == null? ORDER_BY: PARAMETER_BASED;
         }
         Predicate<RepositoryType> hasAnnotation = a -> method.getAnnotation(a.annotation) != null;
         if (OPERATION_ANNOTATIONS.stream().anyMatch(hasAnnotation)) {

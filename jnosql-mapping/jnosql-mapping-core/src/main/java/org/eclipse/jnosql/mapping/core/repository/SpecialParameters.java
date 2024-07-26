@@ -21,10 +21,12 @@ import jakarta.data.page.PageRequest;
 import jakarta.data.Sort;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * The repository features has support for specific types like PageRequest and Sort,
@@ -124,27 +126,86 @@ public final class SpecialParameters {
                 '}';
     }
 
-    static SpecialParameters of(Object[] parameters) {
+    static SpecialParameters of(Object[] parameters, Function<String, String> sortParser) {
         List<Sort<?>> sorts = new ArrayList<>();
         PageRequest pageRequest = null;
         Limit limit = null;
         for (Object parameter : parameters) {
             if (parameter instanceof Sort<?> sort) {
-                sorts.add(sort);
+                sorts.add(mapper(sort, sortParser));
             } else if (parameter instanceof Limit limitInstance) {
                 limit = limitInstance;
             } else if (parameter instanceof Order<?> order) {
-                order.iterator().forEachRemaining(sorts::add);
+                order.sorts().stream().map(s -> mapper(s, sortParser)).forEach(sorts::add);
+            } else if(parameter instanceof Sort<?>[] sortArray){
+                Arrays.stream(sortArray).map(s -> mapper(s, sortParser)).forEach(sorts::add);
             } else if (parameter instanceof PageRequest request) {
                pageRequest = request;
             } else if (parameter instanceof Iterable<?> iterable) {
                 for (Object value : iterable) {
                     if (value instanceof Sort<?> sortValue) {
-                        sorts.add(sortValue);
+                        sorts.add(mapper(sortValue, sortParser));
                     }
                 }
             }
         }
         return new SpecialParameters(pageRequest, limit, sorts);
+    }
+
+    /**
+     * Returns true if the parameter is a special parameter
+     *
+     * @param parameter the parameter
+     * @return true if the parameter is a special parameter
+     */
+    public static boolean isSpecialParameter(Object parameter) {
+        return parameter instanceof Sort<?>
+                || parameter instanceof Limit
+                || parameter instanceof Order<?>
+                || parameter instanceof PageRequest;
+    }
+
+    /**
+     * Returns true if the parameter is not a special parameter
+     *
+     * @param parameter the parameter
+     * @return true if the parameter is not a special parameter
+     */
+    public static boolean isNotSpecialParameter(Object parameter) {
+        return !isSpecialParameter(parameter);
+    }
+
+    /**
+     * Returns true if the parameter is a special parameter
+     *
+     * @param parameter the parameter
+     * @return true if the parameter is a special parameter
+     */
+    public static boolean isSpecialParameter(Class<?> parameter) {
+        return Sort.class.isAssignableFrom(parameter)
+                || Limit.class.isAssignableFrom(parameter)
+                || Order.class.isAssignableFrom(parameter)
+                || PageRequest.class.isAssignableFrom(parameter);
+    }
+
+    /**
+     * Returns true if the parameter is not a special parameter
+     *
+     * @param parameter the parameter
+     * @return true if the parameter is not a special parameter
+     */
+    public static boolean isNotSpecialParameter(Class<?> parameter) {
+        return !isSpecialParameter(parameter);
+    }
+
+    /**
+     * Returns the sort with the property updated from the sort parser
+     * @param sort the sort
+     * @param sortParser the sort parser
+     * @return the special parameters
+     */
+    private static Sort<?> mapper(Sort<?> sort, Function<String, String> sortParser) {
+        var property = sortParser.apply(sort.property());
+        return sort.isAscending()? Sort.asc(property): Sort.desc(property);
     }
 }

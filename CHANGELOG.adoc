@@ -8,10 +8,23 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 
 == [Unreleased]
 
+=== Added
+
+- Enables custom Repository
+- Include the `First` keyword in the method by query in the Repository
+- Include the `Null`, `NotNull` and `countAll` keywords in the method by query in the Repository
+
+=== Fixed
+
+- Fix the `Orderby` annotation in the Repository
+
+== [1.1.1] - 2023-05-25
+
 === Changed
 
-- Upgrade Jakarta Data to version 1.0.0-M4
+- Upgrade Jakarta Data to version 1.0.0-RC1
 - Upgrade Jakarta NoSQL to version 1.0.0-M1
+- Replace query language to Jakarta Data Query Language as default
 
 === Added
 
@@ -20,6 +33,7 @@ and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Version
 - Include Column and Document Templates
 - Include support to Embedded and EmbeddedCollection as group
 - Include support to CursoredPage pagination
+- Include support to Jakarta Data Query language as default
 
 === Removed
 

@@ -19,6 +19,7 @@ import jakarta.data.repository.Param;
 import jakarta.data.repository.Query;
 import jakarta.data.Sort;
 import jakarta.inject.Inject;
+import org.assertj.core.api.SoftAssertions;
 import org.eclipse.jnosql.mapping.NoSQLRepository;
 import org.eclipse.jnosql.mapping.PreparedStatement;
 import org.assertj.core.api.Assertions;
@@ -248,6 +249,28 @@ class CrudRepositoryProxyTest {
 
         assertNull(personRepository.findByName("name"));
 
+
+    }
+
+    @Test
+    void shouldFindByFirstAgeInstance() {
+
+        when(template.select(any(SelectQuery.class)))
+                .thenReturn(Stream.of(Person.builder().build()));
+
+        personRepository.findFirst10ByAge(10);
+
+        ArgumentCaptor<SelectQuery> captor = ArgumentCaptor.forClass(SelectQuery.class);
+        verify(template).select(captor.capture());
+        SelectQuery query = captor.getValue();
+        SoftAssertions.assertSoftly(soft -> {
+            soft.assertThat(query.name()).isEqualTo("Person");
+            soft.assertThat(query.condition()).isPresent();
+            soft.assertThat(query.limit()).isEqualTo(10);
+            CriteriaCondition condition = query.condition().orElseThrow();
+            soft.assertThat(condition.condition()).isEqualTo(EQUALS);
+            soft.assertThat(condition.element().value().get()).isEqualTo( 10);
+        });
 
     }
 
@@ -583,16 +606,26 @@ class CrudRepositoryProxyTest {
 
     @Test
     void shouldExecuteJNoSQLQuery() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(), Mockito.anyString())).thenReturn(statement);
         personRepository.findByQuery();
-        verify(template).query("select * from Person");
+        verify(template).prepare("FROM Person", "Person");
     }
 
     @Test
     void shouldExecuteJNoSQLPrepare() {
-        PreparedStatement statement = Mockito.mock(PreparedStatement.class);
-        when(template.prepare(Mockito.anyString())).thenReturn(statement);
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(), Mockito.anyString())).thenReturn(statement);
         personRepository.findByQuery("Ada");
         verify(statement).bind("id", "Ada");
+    }
+
+    @Test
+    void shouldExecuteJNoSQLPrepareIndex() {
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(), Mockito.anyString())).thenReturn(statement);
+        personRepository.findByQuery(10);
+        verify(statement).bind("?1", 10);
     }
 
     @Test
@@ -648,7 +681,7 @@ class CrudRepositoryProxyTest {
         verify(template).select(captor.capture());
         SelectQuery query = captor.getValue();
         CriteriaCondition condition = query.condition().get();
-        final Sort sort = query.sorts().get(0);
+        final Sort<?> sort = query.sorts().get(0);
         final Element document = condition.element();
         assertEquals("Person", query.name());
         assertEquals("salary.currency", document.name());
@@ -694,6 +727,20 @@ class CrudRepositoryProxyTest {
         CriteriaCondition condition = negate.element().get(CriteriaCondition.class);
         assertEquals(GREATER_THAN, condition.condition());
         assertEquals(Element.of("age", 10), condition.element());
+    }
+
+    @Test
+    void shouldCount() {
+
+        PreparedStatement statement = Mockito.mock(org.eclipse.jnosql.mapping.semistructured.PreparedStatement.class);
+        when(template.prepare(Mockito.anyString(), Mockito.anyString())).thenReturn(statement);
+
+        when(statement.isCount()).thenReturn(true);
+        when(statement.count()).thenReturn(10L);
+
+        long result = personRepository.count("Ada", 10);
+
+        assertEquals(10L, result);
     }
 
     @Test
@@ -744,6 +791,8 @@ class CrudRepositoryProxyTest {
 
     interface PersonRepository extends NoSQLRepository<Person, Long> {
 
+        List<Person> findFirst10ByAge(int age);
+
         List<Person> findBySalary_Currency(String currency);
 
         List<Person> findBySalary_CurrencyAndSalary_Value(String currency, BigDecimal value);
@@ -780,11 +829,17 @@ class CrudRepositoryProxyTest {
 
         Set<Person> findByNameLike(String name);
 
-        @Query("select * from Person")
+        @Query("FROM Person")
         Optional<Person> findByQuery();
 
-        @Query("select * from Person where id = @id")
+        @Query("FROM Person WHERE id = :id")
         Optional<Person> findByQuery(@Param("id") String id);
+
+        @Query("FROM Person WHERE age = ?1")
+        Optional<Person> findByQuery(int age);
+
+        @Query("select count(this) FROM Person WHERE name = ?1 and age > ?2")
+        long count(String name, int age);
     }
 
     public interface VendorRepository extends CrudRepository<Vendor, String> {
